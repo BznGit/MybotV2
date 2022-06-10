@@ -5,26 +5,33 @@ const api = settings.MiningCoreApiEndpoints;
 const users = require('../storage/users.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
+const coins =[];
 
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const subscribe = new Scenes.WizardScene(
   "subSceneWizard", 
-    // Шаг 1: Ввод монеты -------------------------------------------------------------------------
-    (ctx) => {
+   // Шаг 1: Ввод монеты -------------------------------------------------------------------------
+  (ctx) => { 
     ctx.wizard.state.stepError=false; 
-    ctx.reply('Выберите одну из монет пула:', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        Markup.button.callback ('Ethereum','chooseEth'),
-        Markup.button.callback('Ergo', 'chooseErgo'),
-        Markup.button.callback('Vertcoin', 'chooseVert'),              
-      ])    
-    })
-    return ctx.wizard.next(); 
+    axios.get(api + '/api/pools/')
+    .then((response)=> {
+      let pools = response.data.pools;
+      let coins =[];
+      pools.forEach(item=>{
+        coins.push({poolId : item.id, name : item.coin.name});
+      });
+      let buttons = [];
+      coins.forEach(item=>{buttons.push(item.name)});
+      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+      Markup.keyboard(buttons,{ wrap: (btn, index, currentRow) => currentRow.length >=5})
+      .oneTime().resize())
+      
+    });
+    return ctx.wizard.next();    
   },
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
-      axios.get(api + '/api/pools/' + ctx.wizard.state.poolId + '/miners/' + ctx.message.text)
+    axios.get(api + '/api/pools/' + ctx.wizard.state.poolId + '/miners/' + ctx.message.text)
     .then((response)=> {
       if (response.data.performance == undefined){
         ctx.reply('Этот кошелек неактуален или введен с ошибкой!');
