@@ -5,12 +5,11 @@ const api = settings.MiningCoreApiEndpoints;
 const users = require('../storage/users.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
-const coins =[];
 
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const subscribe = new Scenes.WizardScene(
   "subSceneWizard", 
-   // Шаг 1: Ввод монеты -------------------------------------------------------------------------
+  // Шаг 1: Ввод монеты -------------------------------------------------------------------------
   (ctx) => { 
     ctx.wizard.state.stepError=false; 
     axios.get(api + '/api/pools/')
@@ -20,17 +19,24 @@ const subscribe = new Scenes.WizardScene(
       pools.forEach(item=>{
         coins.push({poolId : item.id, name : item.coin.name});
       });
+      ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
       ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
-      Markup.keyboard(buttons,{ wrap: (btn, index, currentRow) => currentRow.length >=5})
-      .oneTime().resize())
-      
+      Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >=5})
+      .oneTime().resize());     
     });
     return ctx.wizard.next();    
   },
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
+    ctx.wizard.state.stepError=false; 
+    let poolId = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
+    if(poolId!=undefined) ctx.wizard.state.poolId = poolId;
+    ctx.reply('Введите кошелек <b>' + ctx.message.text + '</b>', {parse_mode: 'HTML'});
+  },
+  (ctx) => {
+    ctx.wizard.state.stepError=false; 
     axios.get(api + '/api/pools/' + ctx.wizard.state.poolId + '/miners/' + ctx.message.text)
     .then((response)=> {
       if (response.data.performance == undefined){
@@ -54,7 +60,6 @@ const subscribe = new Scenes.WizardScene(
       return ctx.wizard.next();        
         
     }).catch(function (error) {
-      // handle error
       console.log('Wallet registration request error: ', error);
       logIt('Wallet registration request error: ', error);
       ctx.reply('Введены неверные данные попробуйте еще раз!');
