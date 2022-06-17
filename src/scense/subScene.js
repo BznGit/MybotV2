@@ -11,6 +11,7 @@ const subscribe = new Scenes.WizardScene(
   "subSceneWizard", 
   // Шаг 1: Ввод монеты -------------------------------------------------------------------------
   (ctx) => { 
+    
     ctx.wizard.state.stepError=false; 
     axios.get(api + '/api/pools/')
     .then((response)=> {
@@ -23,7 +24,7 @@ const subscribe = new Scenes.WizardScene(
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
       ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
-      Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >=5})
+      Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });
     return ctx.wizard.next();    
@@ -31,9 +32,14 @@ const subscribe = new Scenes.WizardScene(
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
     ctx.wizard.state.stepError=false; 
-    let poolId = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
-    if(poolId!=undefined) ctx.wizard.state.poolId = poolId;
+    let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
+    if(curCoin != undefined) ctx.wizard.state.poolId = curCoin.poolId;
+    else{
+      ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
+      return 
+    }  
     ctx.reply('Введите кошелек <b>' + ctx.message.text + '</b>', {parse_mode: 'HTML'});
+    return ctx.wizard.next();  
   },
   (ctx) => {
     ctx.wizard.state.stepError=false; 
@@ -45,7 +51,6 @@ const subscribe = new Scenes.WizardScene(
         return
       }
       ctx.wizard.state.wallet =  ctx.message.text;
-      
       let wrk = Object.keys(response.data.performance.workers);
       ctx.wizard.state.tempWorkerNames = wrk;
       if (wrk[0]=='') wrk[0] = 'default';
@@ -218,10 +223,14 @@ subscribe.action('subHash', (ctx)=>{
   ctx.reply('Вы подписаны на оповещение о хешрейте!')
   let curUser = {
     userId : ctx.chat.id,
-    poolId : ctx.wizard.state.poolId,
-    wallet : ctx.wizard.state.wallet,
-    block  : ctx.wizard.state.block, 
-    workers : [ctx.wizard.state.worker]
+    pools:[
+      {
+        poolId : ctx.wizard.state.poolId,
+        wallet : ctx.wizard.state.wallet,
+        block  : ctx.wizard.state.block, 
+        workers : [ctx.wizard.state.worker]
+      }
+    ]
   };
   users.push(curUser);
   //Запись данных пользователя в файл -------------------------------------------------------------
