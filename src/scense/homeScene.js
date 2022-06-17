@@ -39,18 +39,18 @@ const home = new Scenes.WizardScene(
       }
       
     }
-    else {
+    else 
+    {
       if(currUser.wallet==null && currUser.workers==null){
         try{
-          let coin = null;
-          switch (currUser.poolId){
-            case 'ethpool' : coin ='Ethereum';
-                break;
-            case 'ergopool' : coin ='Ergo';
-              break;
-            case 'vtcpool' : coin ='Vertcoin';
-              break;
-          }
+          axios.get(api + '/api/pools/')
+          .then((response)=> {
+            let pools = response.data.pools;
+            let coins =[];
+            pools.forEach(item=>{
+              coins.push({poolId : item.id, name : item.coin.name});
+            });
+          });
           ctx.reply('Вы подписаны на оповещение о новом блоке монеты <b>' + coin + '</b>',
               { parse_mode: 'HTML',
                 ...Markup.inlineKeyboard([
