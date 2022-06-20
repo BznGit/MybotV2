@@ -11,16 +11,16 @@ const chengeSubscribe = new Scenes.WizardScene(
     // Шаг 0 --------------------------------------------------------------------------------------
     (ctx)=>{
       ctx.wizard.state.stepError=false; 
-      let  curUser = users.find(item=>item.userId == ctx.chat.id); 
-      ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
-
-      let buttons = [];
-      curUser.pools.forEach(item=>{buttons.push(item.pool.name)});
-      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
-      Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
-      .oneTime().resize());     
-      return ctx.wizard.next();    
+      ctx.reply(`Выберите необходимое действие:`, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [ { text: "Добавить монету", callback_data: "addCoin" },{ text: "Удалить монету", callback_data: "delCoin" },{ text: "Изменить монету", callback_data: "changeCoin" }],
+          [{ text: "Назад", callback_data: "back" }],                
+        ]) 
+      })       
+   
     },
+
     // Шаг 1 --------------------------------------------------------------------------------------
     (ctx)=>{
       ctx.wizard.state.stepError=false;
@@ -54,7 +54,7 @@ const chengeSubscribe = new Scenes.WizardScene(
           ctx.reply('Введите кошелек заново');
           return
         }
-           
+        ctx.wizard.state.pool.wallet = ctx.message.text;   
         let wrk= Object.keys(response.data.performance.workers);
         ctx.wizard.state.tempWorkerNames = wrk;
         if (wrk[0]=='') wrk[0] = 'default';
@@ -166,11 +166,31 @@ const chengeSubscribe = new Scenes.WizardScene(
       }       
     }, 
 );
-
+// Обработчик добавления моненты ------------------------------------------------------------------
+chengeSubscribe.action('addCoin',  (ctx)=>{
+  ctx.scene.leave();
+  ctx.scene.enter("addCoinSceneWizard") 
+});
+// Обработчик добавления моненты ------------------------------------------------------------------
+chengeSubscribe.action('delCoin',  (ctx)=>{
+  ctx.scene.leave();
+  ctx.scene.enter("delCoinSceneWizard") 
+});
+// Обработчик добавления моненты ------------------------------------------------------------------
+chengeSubscribe.action('changeCoin',  (ctx)=>{
+  let  curUser = users.find(item=>item.userId == ctx.chat.id); 
+  ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
+  let buttons = [];
+  curUser.pools.forEach(item=>{buttons.push(item.pool.name)});
+  ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+  Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
+  .oneTime().resize());
+  return ctx.wizard.next();
+});
 // Обработчик изменения кошелька ------------------------------------------------------------------
 chengeSubscribe.action('chooseWallet',  (ctx)=>{
   ctx.wizard.state.pool.wallet = null;
-  ctx.wizard.state.workers = [];
+  ctx.wizard.state.pool.workers = [];
   ctx.reply('Введите кошелек:')
   ctx.wizard.selectStep(2);
 });
@@ -265,28 +285,22 @@ chengeSubscribe.action('subHash', (ctx)=>{
     ctx.wizard.state.pool.workers.push(ctx.wizard.state.tempWorker) 
   }
   console.log('ctx.wizard.state.pool.workers>>>',ctx.wizard.state.pool.workers);
-  let changedUser = {
-    userId : ctx.chat.id,
-    pools:[
-      {
-        pool : ctx.wizard.state.pool.pool,
-        wallet : ctx.wizard.state.pool.wallet,
-        block  : ctx.wizard.state.pool.block, 
-        workers : JSON.parse(JSON.stringify(ctx.wizard.state.pool.workers))
-       
-
-      }
-    ]
+  let changedCoin = {
+    pool : ctx.wizard.state.pool.pool,
+    wallet : ctx.wizard.state.pool.wallet,
+    block  : ctx.wizard.state.pool.block, 
+    workers : JSON.parse(JSON.stringify(ctx.wizard.state.pool.workers))
   };
   let index = users.findIndex(item=>item.userId == ctx.chat.id);
   if (index != -1){
-    users.splice(index, index+1);
-    users.push(changedUser);
+    let indexCoin = users[index].pools.findIndex(item=>item.pool.id==changedCoin.pool.id);
+    users[index].pools.splice(indexCoin, indexCoin + 1);
+    users[index].pools.push(changedCoin);
     //Запись изменений пользователя в файл --------------------------------------------------------
     try{
       fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-      console.log('User data changed: Id -> ', changedUser.userId);
-      logIt('User data changed: Id -> ', changedUser.userId);
+      console.log('User data changed: Id -> ', changedCoin.pool.name);
+      logIt('User data changed: Id -> ', changedCoin.pool.name);
     }catch(err){
       console.log('Error writing to user changes file: ', err);
       logIt('Error writing to user changes file: ', err);

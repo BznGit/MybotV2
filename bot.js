@@ -8,6 +8,8 @@ const home = require('./src/scense/homeScene');
 const unSubscribe = require('./src/scense/unSubScene');
 const subscribe = require('./src/scense/subScene');
 const chengeSubscribe = require('./src/scense/chengeSubScene');
+const addCoin = require('./src/scense/addCoinScene');
+const delCoin = require('./src/scense/delCoinScene');
 const onBlock = require('./src/scense/blockScene');
 const users = require('./src/storage/users.json');
 const {formatHashrate} = require('./src/libs/utils.js');
@@ -17,7 +19,7 @@ const fs = require('fs');
 
 // Создание менеджера сцен ------------------------------------------------------------------------
 const stage = new Scenes.Stage();
-stage.register( home, subscribe, unSubscribe, chengeSubscribe, onBlock);
+stage.register( home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin);
 // Непосредственный запуск опроса------------------------------------------------------------------
 begin();
 // Создание менеджера сцен ------------------------------------------------------------------------
@@ -147,7 +149,7 @@ function  getHash(){
   users.forEach(item =>{
     if(item.wallet==null && item.workers==null) return
     axios({
-      url: api2 + '/api/pools/' + item.poolId + '/miners/' + item.wallet,
+      url: api2 + '/api/pools/' + item.pools.pool.id + '/miners/' + item.pools.wallet,
       method: 'get',
       timeout: 2000})
     .then((response)=> {
