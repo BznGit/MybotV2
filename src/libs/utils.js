@@ -1,4 +1,10 @@
- let formatHashrate = function(rate) {
+const axios = require('axios');
+const settings = require('../../botSettings.json');
+const api = settings.MiningCoreApiEndpoints;
+let coins = [];
+
+
+let formatHashrate = function(rate) {
     rate= parseFloat(rate); let unit= 'H/s';
     if(rate >= 1000) { rate /= 1000; unit= 'KH/s'; }
     if(rate >= 1000) { rate /= 1000; unit= 'MH/s'; }
@@ -24,4 +30,21 @@ let koeff = function(def){
       }
       return k
   };
-  module.exports = {koeff, formatHashrate}
+
+  let poolIdToCoin = function(id){
+    return axios.get(api + '/api/pools/')
+    .then((response)=> {
+      let pools = response.data.pools;
+      coins =[];
+      pools.forEach(item=>{
+        coins.push({poolId : item.id, name : item.coin.name});
+      }) 
+      console.log('Request sended');
+       let curCoin = coins.find(item=>item.poolId==id);
+      console.log('->', curCoin.name)
+      return curCoin.name
+    })
+  
+  };
+
+  module.exports = {koeff, formatHashrate, poolIdToCoin}

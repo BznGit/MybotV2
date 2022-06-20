@@ -1,16 +1,20 @@
 const fs = require('fs');
+const axios = require('axios');
 const users = require('../storage/users.json');
 const settings = require('../../botSettings.json');
+const api = settings.MiningCoreApiEndpoints;
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
+const {poolIdToCoin} = require('../libs/utils');
 // Сцена пользователя (домашняя) ------------------------------------------------------------------
 const home = new Scenes.WizardScene(
   "homeSceneWizard", 
   // Шаг 1: Получение исходных данных пользователя ------------------------------------------------
   (ctx)=>{
     let currUser = users.find(item=>item.userId == ctx.chat.id);
-    
+    // Если пользователь не найден ----------------------------------------------------------------
     if (currUser == undefined){
+      // Если пользователь - это групповой чат ----------------------------------------------------
       if (ctx.chat.type =='group'){
         try{
           return  ctx.reply('Сейчас у Вас нет подписки на оповещение о появлении нового блока', {
@@ -24,6 +28,7 @@ const home = new Scenes.WizardScene(
         logIt('Error sending message to user! HomeScene.js line 20', err);
       }
       }else{
+        // Если пользователь - это человек --------------------------------------------------------
         try{
           return  ctx.reply('Сейчас у Вас нет подписки на оповещение о появлении нового блока и падении текущего хешрейта воркеров', {
                     parse_mode: 'HTML',
@@ -32,60 +37,58 @@ const home = new Scenes.WizardScene(
                        Markup.button.callback('Подписаться на оповещение о блоке', 'blockSub'),       
                     ])
                   })
-      }catch(err){
-        console.log('Error sending message to user! HomeScene.js line 20', err);
-        logIt('Error sending message to user! HomeScene.js line 20', err);
+        }catch(err){
+          console.log('Error sending message to user! HomeScene.js line 20', err);
+          logIt('Error sending message to user! HomeScene.js line 20', err);
+        }
       }
-      }
-      
-    }
-    else 
-    {
-      if(currUser.wallet==null && currUser.workers==null){
+    }else{
+    // Если пользователь найден -------------------------------------------------------------------
         try{
+          
           axios.get(api + '/api/pools/')
           .then((response)=> {
             let pools = response.data.pools;
             let coins =[];
             pools.forEach(item=>{
-              coins.push({poolId : item.id, name : item.coin.name});
-            });
-          });
-          ctx.reply('Вы подписаны на оповещение о новом блоке монеты <b>' + coin + '</b>',
-              { parse_mode: 'HTML',
-                ...Markup.inlineKeyboard([
-                { text: "Отписаться от оповещения", callback_data: "unSub" },
-                { text: "Нет", callback_data: "back" }, 
-              ])
-            });       
-        }catch(err){
-          console.log('Error getting user info: homeScene.js line 62 ', err);
-          logIt('Error getting user info: homeScene.js line 62', err);
-        }
-      }else{
-        let text='';
-        let item = currUser.workers
-        for(let i=0; i<item.length; i++){
-          text += `${i+1}) «`+ `${item[i].name ==''? 'default': item[i].name}` +'» : ограничение - ' + item[i].hashLevel +' '+ item[i].hashDev + `, оповещение: «${item[i].delivered? 'отключено':'включено'}` + '»;\n'
-        }
-        try{
-          ctx.reply('<u>Вы подписаны на оповещение с параметрами:</u>\n' +
-            '<b>- монета: </b>'   + currUser.poolId  + ';\n' +
-            '<b>- оповещение о новом блоке: </b>«'  + currUser.block + '»;\n' +
-            '<b>- кошелек: </b>'  + currUser.wallet + ';\n' +
-            '<b>- контролируемые воркеры: </b>\n'  + text + 
-            'Выберите:',  {
-              parse_mode: 'HTML',
-              ...Markup.inlineKeyboard([
-                  [{ text: "Отписаться от оповещения", callback_data: "unSub" },{ text: "Изменить параметры оповещения", callback_data: "chengeSub" }],
-                  [{ text: "Назад", callback_data: "back" }], 
-                ])
-            });       
+              coins.push({id : item.id, name : item.coin.name});
+            })
+            return coins
+          }).then((coins)=>{
+         
+              let text ='';
+              let userPools = currUser.pools;
+              for(let j=0; j<userPools.length; j++){
+            
+                let curCoin = coins.find(item=>item.id==userPools[j].pool.id);
+                if (curCoin==undefined) {
+                  text += j+1 + '. Монета «' + userPools[j].pool.name + '» - больше не поддерживается!\n'
+                  continue
+                } else {
+                  text += j+1 + '. Монета: ' + userPools[j].pool.name +':\n' +
+                      '  - оповещение о блоке: «'+ userPools[j].block +'»;\n' +
+                      `${userPools[j].wallet==null? '' : '  - кошелек: ' + userPools[j].wallet + ';\n'}` +
+                      `${userPools[j].wallet==null? '' : '  - контролируемые воркеры:\n'}` ; 
+                  let item = userPools[j].workers
+                  for(let i=0; i<item.length; i++){
+                    text += `    ${i+1}) «`+ `${item[i].name ==''? 'default': item[i].name}` +'» : ограничение - ' + item[i].hashLevel +' '+ item[i].hashDev + `, оповещение: «${item[i].delivered? 'отключено':'включено'}` + '»;\n'
+                  }
+                }   
+              }
+              ctx.reply('<u>Вы подписаны на оповещение с параметрами:</u>\n' + text +
+                'Выберите:',  {
+                  parse_mode: 'HTML',
+                  ...Markup.inlineKeyboard([
+                      [{ text: "Отписаться от оповещения", callback_data: "unSub" },{ text: "Изменить параметры оповещения", callback_data: "chengeSub" }],
+                      [{ text: "Назад", callback_data: "back" }], 
+                    ])
+              }); 
+            }); 
+         
         }catch(err){
           console.log('Error getting user info: homeScene.js line 45 ', err);
           logIt('Error getting user info: homeScene.js line 45', err);
         }
-      }
     } 
 });
 // Обработчик кнопки "Подписаться" ----------------------------------------------------------------

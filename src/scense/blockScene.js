@@ -9,63 +9,62 @@ const {logIt} = require('../libs/loger');
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const onBlock = new Scenes.WizardScene(
   "blockSceneWizard", 
-    // Шаг 1: Ввод монеты -------------------------------------------------------------------------
-    (ctx) => {
+   // Шаг 1: Ввод монеты -------------------------------------------------------------------------
+  (ctx) => {
     ctx.wizard.state.stepError=false; 
-    ctx.reply('Выберите одну из монет пула:', {
+    axios.get(api + '/api/pools/')
+    .then((response)=> {
+      let pools = response.data.pools;
+      let coins =[];
+      pools.forEach(item=>{
+        coins.push({id : item.id, name : item.coin.name});
+      });
+      ctx.wizard.state.coins = coins;
+      let buttons = [];
+      coins.forEach(item=>{buttons.push(item.name)});
+      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+      Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
+      .oneTime().resize());     
+    });
+    return ctx.wizard.next();  
+  },
+  // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
+  (ctx) => {
+    ctx.wizard.state.stepError=false; 
+    if (ctx.message==undefined){
+      ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});
+      return
+    }
+    let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
+    if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
+    else{
+      ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
+      return 
+    }  
+    ctx.reply('Подписаться на оповщение о блоке <b>' + ctx.message.text + '</b>', {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
-        { text: 'Ethereum', callback_data: 'chooseEth'}, 
-        { text: 'Ergo', callback_data: 'chooseErgo' },  
-        { text: 'Vertcoin', callback_data: 'chooseVert' }           
-      ])    
+        { text: "Да", callback_data: 'subBlock' }, 
+        { text: "Нет", callback_data: 'back' }
+      ])
     })
-    return ctx.wizard.next(); 
+    return ctx.wizard.next();  
   },
 );
-// Ethereum ---------------------------------------------------------------------------------------
-// Обработчик выбра монеты Ethereum ---------------------------------------------------------------
-onBlock.action('chooseEth', (ctx)=>{
-  ctx.wizard.state.poolId = 'ethpool';
-  ctx.reply('Подписаться на оповещение о новом блоке Ethereum?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlock' }, 
-      { text: "Нет", callback_data: 'back' }
-    ])
-  }) 
-});
-// Обработчик выбра монеты Ergo -------------------------------------------------------------------
-onBlock.action('chooseErgo',  (ctx)=>{
-  ctx.wizard.state.poolId = 'ergopool'
-  ctx.reply('Подписаться на оповещение о новом блоке Ergo?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlock' }, 
-      { text: "Нет", callback_data: 'back' }
-    ])
-  }) 
-});
-// Обработчик выбра монеты Vertcoin ---------------------------------------------------------------
-onBlock.action('chooseVert', (ctx)=>{
-  ctx.wizard.state.poolId = 'vtcpool';
-  ctx.reply('Подписаться на оповещение о новом блоке Vertcoin?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlock' }, 
-      { text: "Нет", callback_data: 'back' }
-    ])
-  }) 
-});
+
 // Обработчик добавления пользователя -------------------------------------------------------------
 onBlock.action('subBlock', (ctx)=>{
-  ctx.reply('Вы подписаны на оповещение о хешрейте!')
+  ctx.reply('Вы подписаны на оповещение о блоке!')
   let curUser = {
     userId : ctx.chat.id,
-    poolId : ctx.wizard.state.poolId,
-    block  : 'да',
-    wallet : null, 
-    workers : null
+    pools:[
+      {
+        pool : ctx.wizard.state.pool,
+        wallet : null,
+        block  : 'да', 
+        workers : []
+      }
+    ]
   };
   users.push(curUser);
   //Запись данных пользователя в файл -------------------------------------------------------------

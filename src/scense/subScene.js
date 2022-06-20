@@ -5,20 +5,19 @@ const api = settings.MiningCoreApiEndpoints;
 const users = require('../storage/users.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
-
+const {poolIdToCoin} = require('../libs/utils');
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const subscribe = new Scenes.WizardScene(
   "subSceneWizard", 
   // Шаг 1: Ввод монеты -------------------------------------------------------------------------
   (ctx) => { 
-    
     ctx.wizard.state.stepError=false; 
     axios.get(api + '/api/pools/')
     .then((response)=> {
       let pools = response.data.pools;
       let coins =[];
       pools.forEach(item=>{
-        coins.push({poolId : item.id, name : item.coin.name});
+        coins.push({id : item.id, name : item.coin.name});
       });
       ctx.wizard.state.coins = coins;
       let buttons = [];
@@ -33,17 +32,24 @@ const subscribe = new Scenes.WizardScene(
   (ctx) => {
     ctx.wizard.state.stepError=false; 
     let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
-    if(curCoin != undefined) ctx.wizard.state.poolId = curCoin.poolId;
+    if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
       return 
     }  
-    ctx.reply('Введите кошелек <b>' + ctx.message.text + '</b>', {parse_mode: 'HTML'});
+    ctx.reply('Подписаться на повещение о блоке <b>' +ctx.message.text + '</b>' , {
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        { text: "Да", callback_data: 'subBlock' }, 
+        { text: "Нет", callback_data: 'back' }
+      ])
+    }) 
     return ctx.wizard.next();  
   },
+
   (ctx) => {
     ctx.wizard.state.stepError=false; 
-    axios.get(api + '/api/pools/' + ctx.wizard.state.poolId + '/miners/' + ctx.message.text)
+    axios.get(api + '/api/pools/' + ctx.wizard.state.pool.id + '/miners/' + ctx.message.text)
     .then((response)=> {
       if (response.data.performance == undefined){
         ctx.reply('Этот кошелек неактуален или введен с ошибкой!');
@@ -107,91 +113,35 @@ const subscribe = new Scenes.WizardScene(
     } 
     ctx.wizard.state.worker.hashLevel =  ctx.message.text;
     ctx.wizard.state.worker.delivered = false;
+   
     ctx.reply('<u>Ваши данные:</u>\n'+ 
-      '<b>- монета: </b>'  + ctx.wizard.state.poolId + ';\n' +
+      '<b>- монета: </b>'  + ctx.wizard.state.pool.name + ';\n' +
       '<b>- оповещение о новом блоке: </b>«'  + ctx.wizard.state.block + '»;\n' +
       '<b>- кошелек: </b>' + ctx.wizard.state.wallet + ';\n' +
       '<b>- воркер: «</b>'  + ctx.wizard.state.worker.name + '»;\n' +
       '<b>- оповещение об уровене хешрейта: </b>'  + ctx.wizard.state.worker.hashLevel + ' ' + ctx.wizard.state.worker.hashDev,
       {parse_mode: 'HTML'}
-    ).then(
-      ctx.reply('Подписаться?', {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          { text: "Да", callback_data: 'subHash' }, 
-          { text: "Нет", callback_data: 'back' }
-        ])
-      })
-    )     
+    )
+  
+    ctx.reply('Подписаться?', {
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        { text: "Да", callback_data: 'subHash' }, 
+        { text: "Нет", callback_data: 'back' }
+      ])
+    })
+     
   } 
 );
 // Ethereum ---------------------------------------------------------------------------------------
-// Обработчик выбра монеты Ethereum ---------------------------------------------------------------
-subscribe.action('chooseEth', (ctx)=>{
-  ctx.wizard.state.poolId = 'ethpool';
-  ctx.reply('Подписаться на оповещение о новом блоке Ethereum?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlockEth' }, 
-      { text: "Нет", callback_data: 'notSubBlockEth' }
-    ])
-  }) 
+
+// Обработчик подписки на блок Ethereum -----------------------------------------------------------
+subscribe.action('subBlock',  (ctx)=>{
+  ctx.wizard.state.block = 'да'
+  ctx.reply('Введите кошелек ' + ctx.wizard.state.pool.name + ':');
 });
 // Обработчик подписки на блок Ethereum -----------------------------------------------------------
-subscribe.action('subBlockEth',  (ctx)=>{
-  ctx.wizard.state.block = 'да'
-  ctx.reply('Введите Ethereum кошелек:');
-});
-// Обработчик подписки на блок Ethereum -----------------------------------------------------------
-subscribe.action('notSubBlockEth',  (ctx)=>{
-  ctx.wizard.state.block = 'нет'
-  ctx.reply('Введите Ethereum кошелек:');
-});
-// Ergo -------------------------------------------------------------------------------------------
-// Обработчик выбра монеты Ergo -------------------------------------------------------------------
-subscribe.action('chooseErgo',  (ctx)=>{
-  ctx.wizard.state.poolId = 'ergopool'
-  ctx.reply('Подписаться на оповещение о новом блоке Ergo?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlockErgo' }, 
-      { text: "Нет", callback_data: 'notSubBlockErgo' }
-    ])
-  }) 
-});
-// Обработчик подписки на блок Ergo ---------------------------------------------------------------
-subscribe.action('subBlockErgo',  (ctx)=>{
-  ctx.wizard.state.block = 'да'
-  ctx.reply('Введите Ergo кошелек:');
-});
-// Обработчик подписки на блок Ergo ---------------------------------------------------------------
-subscribe.action('notSubBlockErgo',  (ctx)=>{
-  ctx.wizard.state.block = 'нет'
-  ctx.reply('Введите Ergo кошелек:');
-});
-// Vertcoin ---------------------------------------------------------------------------------------
-// Обработчик выбра монеты Vertcoin ---------------------------------------------------------------
-subscribe.action('chooseVert', (ctx)=>{
-  ctx.wizard.state.poolId = 'vtcpool';
-  ctx.reply('Подписаться на оповещение о новом блоке Vertcoin?', {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([
-      { text: "Да", callback_data: 'subBlockVert' }, 
-      { text: "Нет", callback_data: 'notSubBlockVert' }
-    ])
-  }) 
-});
-// Обработчик подписки на блок Vertcoin -----------------------------------------------------------
-subscribe.action('subBlockVert',  (ctx)=>{
-  ctx.wizard.state.block = 'да'
-  ctx.reply('Введите Vertcoin кошелек:');
-});
-// Обработчик подписки на блок Vertcoin -----------------------------------------------------------
-subscribe.action('notSubBlockVert',  (ctx)=>{
-  ctx.wizard.state.block = 'нет'
-  ctx.reply('Введите Vertcoin кошелек:');
-});
-//-------------------------------------------------------------------------------------------------
+
 // Обработчики выбора единиц измерения ------------------------------------------------------------
 subscribe.action('chooseK',  (ctx)=>{
   ctx.wizard.state.stepError = false;
@@ -225,7 +175,7 @@ subscribe.action('subHash', (ctx)=>{
     userId : ctx.chat.id,
     pools:[
       {
-        poolId : ctx.wizard.state.poolId,
+        pool : ctx.wizard.state.pool,
         wallet : ctx.wizard.state.wallet,
         block  : ctx.wizard.state.block, 
         workers : [ctx.wizard.state.worker]
