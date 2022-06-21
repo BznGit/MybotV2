@@ -5,7 +5,7 @@ const api = settings.MiningCoreApiEndpoints;
 const users = require('../storage/users.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
-const {poolIdToCoin} = require('../libs/utils');
+
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const subscribe = new Scenes.WizardScene(
   "subSceneWizard", 

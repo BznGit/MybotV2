@@ -1,9 +1,3 @@
-const axios = require('axios');
-const settings = require('../../botSettings.json');
-const api = settings.MiningCoreApiEndpoints;
-let coins = [];
-
-
 let formatHashrate = function(rate) {
     rate= parseFloat(rate); let unit= 'H/s';
     if(rate >= 1000) { rate /= 1000; unit= 'KH/s'; }
@@ -47,4 +41,4 @@ let koeff = function(def){
   
   };
 
-  module.exports = {koeff, formatHashrate, poolIdToCoin}
+  module.exports = {koeff, formatHashrate}

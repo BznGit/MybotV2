@@ -2,7 +2,7 @@ const settings = require('./botSettings.json');
 const { Telegraf, Scenes, session, Markup } = require('telegraf');
 const bot = new Telegraf(settings.telegramBotToken);
 const axios = require('axios');
-const api = settings.MiningCoreApiEndpoints +'/api/pools/ethpool/blocks';
+const api = settings.MiningCoreApiEndpoints +'/api/pools/';
 const api2 = settings.MiningCoreApiEndpoints;
 const home = require('./src/scense/homeScene');
 const unSubscribe = require('./src/scense/unSubScene');
@@ -19,7 +19,7 @@ const fs = require('fs');
 
 // Создание менеджера сцен ------------------------------------------------------------------------
 const stage = new Scenes.Stage();
-stage.register( home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin);
+stage.register(home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin);
 // Непосредственный запуск опроса------------------------------------------------------------------
 begin();
 // Создание менеджера сцен ------------------------------------------------------------------------
@@ -51,15 +51,24 @@ function start(){
   logIt('Bot started');
 };
 // Получение номера последнего блока---------------------------------------------------------------
-var lastBlock = null;
-var tempBlock = null;
+var lastBlocks = [];
+var tempBlock = [];
 function begin(){
-  axios.get(api).then(res => {
-  lastBlock = {
-    blockHeight:res.data[0].blockHeight,
-    status: res.data[0].status
-  } 
-  start();
+  users.forEach(item=>{
+  item.pools.forEach(coin=>{
+      console.log('->', api + coin.pool.id + '/blocks/');
+      let adress = `${api + coin.pool.id}/blocks/`;
+      axios.get(adress).then(res => {
+      let lastBlock = {
+        blockHeight:res.data[0].blockHeight,
+        status: res.data[0].status
+      } 
+      lastBlocks.push(lastBlock);
+      console.log('lastBlocks>>>', lastBlocks);
+    })
+  })
+  console.log('lastBlocks>>>', lastBlocks);
+  //start();
   })
 }
 // Проверка появления нового блок -----------------------------------------------------------------
