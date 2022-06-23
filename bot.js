@@ -21,6 +21,7 @@ const fs = require('fs');
 const stage = new Scenes.Stage();
 stage.register(home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin);
 // Непосредственный запуск опроса------------------------------------------------------------------
+let urls = [];
 begin();
 // Создание менеджера сцен ------------------------------------------------------------------------
 bot.use(session());
@@ -51,108 +52,132 @@ function start(){
   logIt('Bot started');
 };
 // Получение номера последнего блока---------------------------------------------------------------
-var lastBlocks = [];
-var tempBlock = [];
+
+var tempBlock = null
+let lastBlocks = [];
+
 function begin(){
+  
   users.forEach(item=>{
-  item.pools.forEach(coin=>{
-      console.log('->', api + coin.pool.id + '/blocks/');
-      let adress = `${api + coin.pool.id}/blocks/`;
-      axios.get(adress).then(res => {
-      let lastBlock = {
-        blockHeight:res.data[0].blockHeight,
-        status: res.data[0].status
-      } 
-      lastBlocks.push(lastBlock);
-      console.log('lastBlocks>>>', lastBlocks);
+    item.pools.forEach(coin=>{
+      let poolInfo = {
+        url :`${api + coin.pool.id}/blocks/`,
+        id : coin.pool.id
+      };
+      urls.push(poolInfo);
     })
-  })
-  console.log('lastBlocks>>>', lastBlocks);
-  //start();
-  })
+  });
+
+  Promise.allSettled(urls.map(item =>
+    axios.get(item.url)
+  )).then(res => {
+    res.forEach(item=>{
+      if (item.status=='fulfilled'){
+        let block = item.value.data[0];
+        let lastBlock = {
+          poolId : block.poolId,
+          blockHeight : block.blockHeight,
+          status : block.status
+        }
+        lastBlocks.push(lastBlock);
+      }
+    })    
+  }).then(()=>{
+    start(urls);
+  });  
 }
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
-  axios({
-    url: api,
-    method: 'get',
-    timeout: 2000
-  }).then(res => {
-    let currBlock = res.data[0];
-
-    if (tempBlock != null){   
-      // Подтверждение нового блока ---------------------------------------------------------------
-      if (currBlock.blockHeight==tempBlock.blockHeight && currBlock.status=='confirmed'){
-        //console.log('Active users:', users);
-        if (users.length!=0){        
-          users.forEach(item => {
-            if (item.block =='да'){
-              try{
-                bot.telegram.sendMessage(item.userId,
-                  '<b>Новый блок подтвержден!</b>\n'+
-                  'Параметры блока:\n' +
-                  "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                  "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                  "<b>- тип: </b>" + currBlock.type +";\n"+
-                  "<b>- усилие: </b>" + Math.trunc(currBlock.effort*100)+"%" +";\n"+
-                  "<b>- награда: </b>" + currBlock.reward +";\n"+
-                  "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                  "<b>- майнер: </b>" +    currBlock.miner +";\n"+
-                  "<b>- создан: </b>" +    currBlock.created, {parse_mode: 'HTML'}
-                ); 
-                console.log('Block confirmation message sent to user: Id -> ', item.userId);
-                logIt('Block confirmation message sent to user: Id ->', item.userId)
-              }catch(err){
-                console.log('Error sending message about confirmed block! ', err);
-                logIt('Error sending message about confirmed block! ', err);
-                bot.telegram.sendMessage(settings.adminId, 'Error sending message about confirmed block! \n' + err);
-              }
+  console.log('lastBloks>---',lastBlocks);
+  console.log('urls>---', urls);
+  Promise.allSettled(urls.map(item =>
+    axios.get(item.url)
+  )).then(res => {
+    res.forEach(item=>{
+      if (item.status=='fulfilled'){
+        let currBlock = item.value.data[0];
+        console.log('currBlock**', currBlock)
+        if (tempBlock != null){   
+          // Подтверждение нового блока ---------------------------------------------------------------
+          if (currBlock.blockHeight==tempBlock.blockHeight && currBlock.status=='confirmed'){
+            //console.log('Active users:', users);
+            if (users.length!=0){        
+              users.forEach(item => {
+                if (item.block =='да'){
+                  try{
+                    bot.telegram.sendMessage(item.userId,
+                      '<b>Новый блок подтвержден!</b>\n'+
+                      'Параметры блока:\n' +
+                      "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+                      "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+                      "<b>- тип: </b>" + currBlock.type +";\n"+
+                      "<b>- усилие: </b>" + Math.trunc(currBlock.effort*100)+"%" +";\n"+
+                      "<b>- награда: </b>" + currBlock.reward +";\n"+
+                      "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+                      "<b>- майнер: </b>" +    currBlock.miner +";\n"+
+                      "<b>- создан: </b>" +    currBlock.created, {parse_mode: 'HTML'}
+                    ); 
+                    console.log('Block confirmation message sent to user: Id -> ', item.userId);
+                    logIt('Block confirmation message sent to user: Id ->', item.userId)
+                  }catch(err){
+                    console.log('Error sending message about confirmed block! ', err);
+                    logIt('Error sending message about confirmed block! ', err);
+                    bot.telegram.sendMessage(settings.adminId, 'Error sending message about confirmed block! \n' + err);
+                  }
+                }
+              });
             }
-          });
-        }
-        lastBlock =  {
-          blockHeight:currBlock.blockHeight,
-          status: currBlock.status,
-        };
-        tempBlock = null;
-      }
-    } else {
-        // Проверка появления нового блока ----------------------------------------------------------
-      if (lastBlock.blockHeight != currBlock.blockHeight){
-        if (users.length!=0){        
-          users.forEach(item => {
-            if (item.block =='да'){
-              try{
-                bot.telegram.sendMessage(item.userId,
-                  '<b>Найден новый блок!</b>\n'+
-                  'Параметры блока:\n' +
-                  "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                  "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                  "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                  "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
-                );
-                console.log('Sent message about new block to user: Id -> ', item.userId);
-                logIt('Sent message about new block to user: Id -> ', item.userId);
-              }catch(err){
-                console.log('Error sending message about new block! ', err);
-                logIt('Error sending message about new block! ', err());
-                bot.telegram.sendMessage(settings.adminId, 'Error sending message about new block! \n' + err);
+            lastBlock =  {
+              blockHeight:currBlock.blockHeight,
+              status: currBlock.status,
+            };
+            tempBlock = null;
+          }
+        } else {
+            // Проверка появления нового блока ----------------------------------------------------------
+          users.forEach(curUser => {
+            curUser.pools.forEach(curUserCoin=>{
+              if(curUserCoin.pool.id==currBlock.poolId){
+                let lastBlockCurCoin = lastBlocks.find(item=>item.poolId==curUserCoin.pool.id);
+                if (lastBlockCurCoin!=-1){
+                  if (lastBlockCurCoin.blockHeight = currBlock.blockHeight){           
+                    if (curUserCoin.block =='да'){
+                      try{
+                        bot.telegram.sendMessage(curUser.userId,
+                          '<b>Найден новый блок!</b>\n'+
+                          'Параметры блока:\n' +
+                          "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+                          "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+                          "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+                          "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
+                        );
+                        console.log('Sent message about new block to user: Id -> ', curUser.userId);
+                        logIt('Sent message about new block to user: Id -> ', curUser.userId);
+                      }catch(err){
+                        console.log('Error sending message about new block! ', err);
+                        logIt('Error sending message about new block! ', err());
+                        bot.telegram.sendMessage(settings.adminId, 'Error sending message about new block! \n' + err);
+                      }
+                    }
+                    let tempBlock = {
+                      blockHeight: currBlock.blockHeight,
+                      status: currBlock.status
+                    } 
+                    console.log('tempBlock++',tempBlock)
+                  }
+                }
               }
-            }
-            tempBlock = {
-              blockHeight: currBlock.blockHeight,
-              status: currBlock.status
-            } 
+            });
           });
-        }
+        } 
       }
-    } 
-  }).catch(error => {
-    console.error('API ERORR! Block request: ', error);
-    logIt('API ERORR! Block request: ', error);
-    bot.telegram.sendMessage(settings.adminId, 'API ERORR! Block request: \n' + error);
-  })
+    })    
+  }).then(()=>{
+    console.log('lastBlocks!', lastBlocks);
+    
+  });
 };
+
 // Проверка хешрета воркеров ----------------------------------------------------------------------
 function  getHash(){
   users.forEach(item =>{
@@ -266,5 +291,4 @@ function saveChanges(){
   }
 }
 // ------------------------------------------------------------------------------------------------  
-
 
