@@ -23,6 +23,7 @@ const home = new Scenes.WizardScene(
                        Markup.button.callback('Подписаться на оповещение о новом блоке', 'blockSub'),       
                     ])
                   })
+                  
       }catch(err){
         console.log('Error sending message to user! HomeScene.js line 20', err);
         logIt('Error sending message to user! HomeScene.js line 20', err);

@@ -26,10 +26,12 @@ const onBlock = new Scenes.WizardScene(
       Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });
+    
     return ctx.wizard.next();  
   },
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
+    console.log(ctx.chat.type, ctx.chat.id)
     ctx.wizard.state.stepError=false; 
     if (ctx.message==undefined){
       ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});

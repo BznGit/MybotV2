@@ -34,14 +34,25 @@ const chengeSubscribe = new Scenes.WizardScene(
         ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
         return 
       } 
-     
-      ctx.reply(`Выберите параметр монеты <b>${ctx.wizard.state.pool.pool.name}</b>, который необходимо изменить:`, {
+      if(curCoin.wallet==null){
+        ctx.reply(`Выберите параметр монеты <b>${ctx.wizard.state.pool.pool.name}</b>, который необходимо изменить:`, {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [ { text: "Кошелек", callback_data: "chooseWallet" },{ text: "Оповещение о блоке", callback_data: "chooseblock" }],
+                           
+          ]) 
+        }) 
+      }else{
+         ctx.reply(`Выберите параметр монеты <b>${ctx.wizard.state.pool.pool.name}</b>, который необходимо изменить:`, {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
           [ { text: "Кошелек", callback_data: "chooseWallet" },{ text: "Воркеры", callback_data: "chooseWorker" }],
           [{ text: "Оповещение о блоке", callback_data: "chooseblock" }],                
         ]) 
-      })  
+      }) 
+      }
+     
+      
     },
      // Шаг 2: Изменение кошелька ------------------------------------------------------------------
     (ctx) => {

@@ -5,7 +5,7 @@ const api = settings.MiningCoreApiEndpoints;
 const users = require('../storage/users.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
-const {poolIdToCoin} = require('../libs/utils');
+
 // Сцена регистрации нового пользователя ----------------------------------------------------------
 const addCoin = new Scenes.WizardScene(
   "addCoinSceneWizard", 
@@ -32,11 +32,23 @@ const addCoin = new Scenes.WizardScene(
   (ctx) => {
     ctx.wizard.state.stepError=false; 
     let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
+  
+
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
       return 
     }  
+    let index = users.findIndex(item=>item.userId==ctx.chat.id);
+    console.log('index User->', index);
+    let tryCoin = users[index].pools.find(item=>item.pool.id==curCoin.id);
+    console.log('tryCoin User->', tryCoin);
+    if (tryCoin != undefined){
+      
+      ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
+      return
+    } 
+
     ctx.reply('Подписаться на повещение о блоке <b>' +ctx.message.text + '</b>' , {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
