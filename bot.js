@@ -204,19 +204,20 @@ function  getHash(){
     let pools = user.pools;
     pools.forEach(coin=>{
       if(coin.wallet==null && coin.workers==null) return
-      urls2.push(api + coin.pool.id + '/miners/' + coin.wallet) 
-     
+      let obj ={
+        coin : coin.pool.id,
+        url2: api + coin.pool.id + '/miners/' + coin.wallet
+      }
+      urls2.push(obj) 
     })
     console.log(urls2);
     Promise.allSettled(urls2.map(item =>
-    axios.get(item)
+    axios.get(item.url2)
     )).then(res => {
       res.forEach(item=>{
-       
-        console.log('++>>>',item.value.headers);
-        console.log('---->>>',item.value.request);
         if (item.status=='fulfilled'){
-          let currCoin = item.value.data.performance;
+          let currCoin = item.value.data.performance.workers;
+          //console.log('----', item.coin)
           console.log('currCoin>', currCoin)
         }
       });
