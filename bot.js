@@ -3,7 +3,6 @@ const { Telegraf, Scenes, session, Markup } = require('telegraf');
 const bot = new Telegraf(settings.telegramBotToken);
 const axios = require('axios');
 const api = settings.MiningCoreApiEndpoints +'/api/pools/';
-const api2 = settings.MiningCoreApiEndpoints;
 const home = require('./src/scense/homeScene');
 const unSubscribe = require('./src/scense/unSubScene');
 const subscribe = require('./src/scense/subScene');
@@ -46,7 +45,7 @@ bot.action('onStart', (ctx)=>{
 bot.launch();
 // Установка параметров запуска бота --------------------------------------------------------------
 function start(){
-  setInterval(getBlock, settings.monitoringPeriodSec*1000);
+  //setInterval(getBlock, settings.monitoringPeriodSec*1000);
   setInterval(getHash, settings.monitoringPeriodSec*1000)
   console.log('Bot started');
   logIt('Bot started');
@@ -83,7 +82,6 @@ function begin(){
       }
     })    
   }).then(()=>{
-    console.log('api coins:>', api);
     axios.get(api)
     .then((response)=> {
       let pools = response.data.pools;
@@ -98,7 +96,7 @@ function begin(){
 };
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
-  console.log('lastBloks>---',lastBlocks);
+  console.log('lastBloks>---', lastBlocks);
   console.log('urls>---', urls);
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
@@ -201,10 +199,38 @@ function getBlock(){
 
 // Проверка хешрета воркеров ----------------------------------------------------------------------
 function  getHash(){
+  let urls2=[];
+  users.forEach(user =>{
+    let pools = user.pools;
+    pools.forEach(coin=>{
+      if(coin.wallet==null && coin.workers==null) return
+      urls2.push(api + coin.pool.id + '/miners/' + coin.wallet) 
+     
+    })
+    console.log(urls2);
+    Promise.allSettled(urls2.map(item =>
+    axios.get(item)
+    )).then(res => {
+      res.forEach(item=>{
+       
+        console.log('++>>>',item.value.headers);
+        console.log('---->>>',item.value.request);
+        if (item.status=='fulfilled'){
+          let currCoin = item.value.data.performance;
+          console.log('currCoin>', currCoin)
+        }
+      });
+    });
+    
+  });
+
+
+
+
   users.forEach(item =>{
     if(item.wallet==null && item.workers==null) return
     axios({
-      url: api2 + '/api/pools/' + item.pools.pool.id + '/miners/' + item.pools.wallet,
+      url: api2  + item.pools.pool.id + '/miners/' + item.pools.wallet,
       method: 'get',
       timeout: 2000})
     .then((response)=> {
