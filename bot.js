@@ -197,7 +197,7 @@ function getBlock(){
   });
 };
 
-// Проверка хешрета воркеров ----------------------------------------------------------------------
+// Проверка хешрейта воркеров ----------------------------------------------------------------------
 function  getHash(){
   let urls2=[];
   users.forEach(user =>{
@@ -210,25 +210,88 @@ function  getHash(){
       }
       urls2.push(obj) 
     })
-    console.log(urls2);
+    //console.log(urls2);
     Promise.allSettled(urls2.map(item =>
-    axios.get(item.url2)
+      axios.get(item.url2)
     )).then(res => {
       res.forEach(item=>{
+        console.log(item);
         if (item.status=='fulfilled'){
-          let currCoin = item.value.data.performance.workers;
-          //console.log('----', item.coin)
-          console.log('currCoin>', currCoin)
-        }
-      });
-    });
+          if(item.value.data.performance!=undefined){
+            let currCoin = item.value.data.performance.workers;
+            let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
+            console.log('currCoin>', currCoin);
+            let userCoin = user.pools.find(item => item.pool.id==currCoinId)
+            console.log('user coin>', userCoin);
+            userCoin.workers.forEach(item=>{
+              if (currCoin[item.name]!=undefined){
+                console.log('currhash>>', currCoin[item.name].hashrate); 
+                console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
+                if (item.hashLevel*koeff(item.hashDev)>currCoin[item.name].hashrate && item.delivered==false) {
+                  console.log('ALARM!'); 
+                  bot.telegram.sendMessage(user.userId,
+                    '<b>Предупреждение!</b>\n' +
+                    'Хешрейт воркера '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + '\n' +
+                    'кошелька: <b>' + userCoin.wallet   + '</b> \n' +
+                    'монеты: <b>' + userCoin.pool.name + '</b> \n' +
+                    'опустился ниже установленного в <b>'  +  item.hashLevel   + ' '  +  item.hashDev + '</b>\n' +
+                    'и составляет <b>'  +  formatHashrate(currCoin[item.name].hashrate)+ '</b>\n' +
+                    'Оповещение об уровне хешрейта этого воркера <b>отключено!</b>\n' +
+                    'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта', 
+                    { parse_mode: 'HTML' }
+                  );
+                  item.delivered = true;
+                  saveChanges(); 
+                }
+              } 
+            })
+          }
+          else
+          {
+            let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
+            let userCoin = user.pools.find(item => item.pool.id==currCoinId)
+            try{
+              bot.telegram.sendMessage(user.userId,
+                '<b>Внимание!</b>\n' +
+                'Ваш кошелек <b>' + userCoin.wallet   + '</b>\n' +
+                'монеты: <b>' + userCoin.pool.name + '</b> \n' +
+                'неактуален!\n' +
+                'Этот кошелек автоматически <b>удален</b> из списка оповещения.' + 
+                'Для возобновления оповещения подпишитесь снова', 
+                {parse_mode: 'HTML'}  
+              );
+              let index = user.pools.findIndex(item => item.pool.id == userCoin.pool.id);
+              if (index != -1){
+                user.pools.splice(index, index+1);
+                if(user.pools.length==0){
+                  let index1 =users.findIndex(item=>item.userId == user.userId);
+                  if (index1 != -1){
+                    user.pools.splice(index1, index1+1);
+                  }
+                  
+                }
+                console.log('Wallet ' + userCoin.wallet + ' of user ' + user.userId +' is invalid!');
+                console.log('Removed user: Id -> ', user.userId);
+                console.log('Total Users: ', users.length);
+                logIt('Broken wallet ' + item.wallet + ' of user ' + user.userId +' is invalid!');       
+                logIt('Removed user: Id -> ', user.userId);
+                logIt('Total Users: ', users.length);
     
+                saveChanges(); 
+              }
+            }catch(err){
+              console.log('API ERORR! Performance request: ', err);
+              logIt('API ERORR! Performance request: ', err);
+            }
+            return
+          }
+        } 
+      });
+    }); 
   });
 
 
-
-
-  users.forEach(item =>{
+  /*users.forEach(item =>{
     if(item.wallet==null && item.workers==null) return
     axios({
       url: api2  + item.pools.pool.id + '/miners/' + item.pools.wallet,
@@ -256,7 +319,7 @@ function  getHash(){
             logIt('Removed user: Id -> ', item.userId);
             logIt('Total Users: ', users.length);
 
-            saveChanges();
+            saveChanges(); 
          }
         }catch(err){
           console.log('API ERORR! Performance request: ', err);
@@ -327,7 +390,7 @@ function  getHash(){
        bot.telegram.sendMessage(settings.adminId, 'API ERORR! Hashrate request: \n' + error);
       return
      })
-  })
+  })*/
 }
 // Запись новых данных о пользователях в файл -----------------------------------------------------
 function saveChanges(){
