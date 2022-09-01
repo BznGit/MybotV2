@@ -215,7 +215,6 @@ function  getHash(){
       axios.get(item.url2)
     )).then(res => {
       res.forEach(item=>{
-        console.log(item);
         if (item.status=='fulfilled'){
           if(item.value.data.performance!=undefined){
             let currCoin = item.value.data.performance.workers;

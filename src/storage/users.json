@@ -1,1 +1,1 @@
-[]
+[{"userId":886960493,"pools":[{"pool":{"id":"ergopool","name":"Ergo"},"wallet":"9hWEVADgmuAbuy2XsteCVDrxF4KqEBy6wWM6C8Zf9fVxtzXuKnB","block":"да","workers":[{"name":"bzn","hashLevel":"10","hashDev":"MH/s","delivered":false}]},{"pool":{"id":"ethpool","name":"Ethereum"},"wallet":"0xe568eddd2420c0479682b1a4cdadc1358789793b","block":"да","workers":[{"name":"3080","hashLevel":"20","hashDev":"MH/s","delivered":false},{"name":"1080ti","hashLevel":"600","hashDev":"MH/s","delivered":true}]}]}]
