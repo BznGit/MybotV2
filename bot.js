@@ -264,9 +264,10 @@ function  getHash(){
               if (index != -1){
                 user.pools.splice(index, index+1);
                 if(user.pools.length==0){
+                  console.log('....>>',pools.length)
                   let index1 =users.findIndex(item=>item.userId == user.userId);
                   if (index1 != -1){
-                    user.pools.splice(index1, index1+1);
+                    users.splice(index1, index1+1);
                   }
                   
                 }
