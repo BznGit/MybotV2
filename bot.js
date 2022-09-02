@@ -203,14 +203,14 @@ function  getHash(){
   users.forEach(user =>{
     let pools = user.pools;
     pools.forEach(coin=>{
-      if(coin.wallet==null && coin.workers==null) return
+      if(coin.wallet==null && coin.workers.length==0) return
       let obj ={
         coin : coin.pool.id,
         url2: api + coin.pool.id + '/miners/' + coin.wallet
       }
       urls2.push(obj) 
     })
-    //console.log(urls2);
+    console.log('urls2:',urls2);
     Promise.allSettled(urls2.map(item =>
       axios.get(item.url2)
     )).then(res => {
@@ -218,6 +218,7 @@ function  getHash(){
         if (item.status=='fulfilled'){
           if(item.value.data.performance!=undefined){
             let currCoin = item.value.data.performance.workers;
+  
             let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
             console.log('currCoin>', currCoin);
             let userCoin = user.pools.find(item => item.pool.id==currCoinId)
@@ -243,6 +244,41 @@ function  getHash(){
                   saveChanges(); 
                 }
               } 
+              else
+              {
+                if (item.delivered==false){
+                  bot.telegram.sendMessage(user.userId,  
+                    '<b>Внимание!</b>\n' +        
+                    'Воркер '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + ' для кошелька' +'\n' +
+                    '<b>' + userCoin.wallet  + '</b>' +'\n' +
+                    'монеты: <b>' + userCoin.pool.name + '</b> \n' +
+                    '<b><u>не функционирует</u>!</b> \n' +
+                    'Он автоматически <b>удален</b> из Вашего списка контролируемых воркеров.\n' + 
+                    'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта',
+                    {parse_mode: 'HTML'}
+                  );
+                  let index2 = userCoin.workers.findIndex(item1=>item1.name == item.name);
+                  if (index2 != -1){
+                    userCoin.workers.splice(index2, index2+1);
+                    if(userCoin.workers.length == 0){
+                      let index3 =user.pools.findIndex(item2=>item2.pool.name == userCoin.pool.name);
+                      if (index3 != -1) {
+                        user.pools.splice(index3, index3+1);
+                        console.log('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
+                        logIt('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
+                        if(user.pools.length==0){
+                          console.log('....>>',pools.length)
+                          let index1 =users.findIndex(item=>item.userId == user.userId);
+                          if (index1 != -1) users.splice(index1, index1+1);
+                        }
+                      }
+                    }
+                    console.log('Broken worker: «' + item.name + '» of wallet: "' + item.wallet + ' deleted!');
+                    logIt('Broken worker: «' + item.name + '» of wallet ' + item.wallet + ' deleted!');
+                    saveChanges();
+                 }
+                }
+              }
             })
           }
           else
@@ -265,10 +301,7 @@ function  getHash(){
                 if(user.pools.length==0){
                   console.log('....>>',pools.length)
                   let index1 =users.findIndex(item=>item.userId == user.userId);
-                  if (index1 != -1){
-                    users.splice(index1, index1+1);
-                  }
-                  
+                  if (index1 != -1) users.splice(index1, index1+1);
                 }
                 console.log('Wallet ' + userCoin.wallet + ' of user ' + user.userId +' is invalid!');
                 console.log('Removed user: Id -> ', user.userId);

@@ -179,6 +179,7 @@ const chengeSubscribe = new Scenes.WizardScene(
 );
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('addCoin',  (ctx)=>{
+  
   ctx.scene.leave();
   ctx.scene.enter("addCoinSceneWizard") 
 });

@@ -32,7 +32,6 @@ const addCoin = new Scenes.WizardScene(
   (ctx) => {
     ctx.wizard.state.stepError=false; 
     let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
-  
 
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
@@ -61,7 +60,8 @@ const addCoin = new Scenes.WizardScene(
 
   (ctx) => {
     ctx.wizard.state.stepError=false; 
-    axios.get(api + '/api/pools/' + ctx.wizard.state.pool.id + '/miners/' + ctx.message.text)
+    try{
+     axios.get(api + '/api/pools/' + ctx.wizard.state.pool.id + '/miners/' + ctx.message.text)
     .then((response)=> {
       if (response.data.performance == undefined){
         ctx.reply('Этот кошелек неактуален или введен с ошибкой!');
@@ -87,7 +87,11 @@ const addCoin = new Scenes.WizardScene(
       logIt('Wallet registration request error: ', error);
       ctx.reply('Введены неверные данные попробуйте еще раз!');
       return
-    })   
+    })    
+    }catch(err){
+      console.log('Error on request:', err);
+    }
+    
   },
   // Шаг 3: Ввод воркера и единицы измерения ------------------------------------------------------
   (ctx) => {
