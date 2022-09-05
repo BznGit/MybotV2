@@ -224,10 +224,12 @@ function  getHash(){
             let userCoin = user.pools.find(item => item.pool.id==currCoinId)
             console.log('user coin>', userCoin);
             userCoin.workers.forEach(item=>{
-              if (currCoin[item.name]!=undefined){
-                console.log('currhash>>', currCoin[item.name].hashrate); 
+              console.log('currCoin[item.name]>>>', currCoin[item.name],'---', item.name)
+               
+              if (currCoin[(item.name =='default'? '': item.name)]!=undefined){
+                console.log('"', item.name, '" currhash>>', currCoin[(item.name =='default'? '': item.name)].hashrate); 
                 console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
-                if (item.hashLevel*koeff(item.hashDev)>currCoin[item.name].hashrate && item.delivered==false) {
+                if (item.hashLevel*koeff(item.hashDev)>currCoin[(item.name =='default'? '': item.name)].hashrate && item.delivered==false) {
                   console.log('ALARM!'); 
                   bot.telegram.sendMessage(user.userId,
                     '<b>Предупреждение!</b>\n' +
@@ -235,7 +237,7 @@ function  getHash(){
                     'кошелька: <b>' + userCoin.wallet   + '</b> \n' +
                     'монеты: <b>' + userCoin.pool.name + '</b> \n' +
                     'опустился ниже установленного в <b>'  +  item.hashLevel   + ' '  +  item.hashDev + '</b>\n' +
-                    'и составляет <b>'  +  formatHashrate(currCoin[item.name].hashrate)+ '</b>\n' +
+                    'и составляет <b>'  +  formatHashrate(currCoin[(item.name =='default'? '': item.name)].hashrate)+ '</b>\n' +
                     'Оповещение об уровне хешрейта этого воркера <b>отключено!</b>\n' +
                     'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта', 
                     { parse_mode: 'HTML' }
@@ -246,7 +248,7 @@ function  getHash(){
               } 
               else
               {
-                if (item.delivered==false){
+                if (item.delivered==false  && item.name!=''){
                   bot.telegram.sendMessage(user.userId,  
                     '<b>Внимание!</b>\n' +        
                     'Воркер '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + ' для кошелька' +'\n' +

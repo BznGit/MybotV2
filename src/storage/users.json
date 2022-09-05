@@ -1,1 +1,1 @@
-[{"userId":886960493,"pools":[{"pool":{"id":"ergopool","name":"Ergo"},"wallet":"9hWEVADgmuAbuy2XsteCVDrxF4KqEBy6wWM6C8Zf9fVxtzXuKnB","block":"да","workers":[{"name":"bzn","hashLevel":"5","hashDev":"MH/s","delivered":false}]}]}]
+[{"userId":886960493,"pools":[{"pool":{"id":"ergopool","name":"Ergo"},"wallet":"9h7rZjjEf69CnQSZJ6S65EYugSVwRVhwDzgSo8inM97qhw5NaXR","block":"да","workers":[{"name":"default","hashLevel":"22222","hashDev":"MH/s","delivered":true}]}]}]

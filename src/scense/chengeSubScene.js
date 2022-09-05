@@ -218,6 +218,7 @@ chengeSubscribe.action('chooseWorker',  (ctx)=>{
     ctx.wizard.selectStep(2);
     let wrk= Object.keys(response.data.performance.workers);
     ctx.wizard.state.tempWorkerNames = wrk;
+    if (wrk[0]=='') wrk[0] = 'default';
     let text='';
     for(let i=0; i<wrk.length; i++){
       text += `${i+1}) «`+ `${wrk[i]}` +'»\n'
