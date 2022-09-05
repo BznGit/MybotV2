@@ -10,6 +10,7 @@ const chengeSubscribe = require('./src/scense/chengeSubScene');
 const addCoin = require('./src/scense/addCoinScene');
 const delCoin = require('./src/scense/delCoinScene');
 const onBlock = require('./src/scense/blockScene');
+const addOnBlock = require('./src/scense/addBlockScene');
 const users = require('./src/storage/users.json');
 const {formatHashrate} = require('./src/libs/utils.js');
 const {koeff} = require('./src/libs/utils.js');
@@ -18,7 +19,7 @@ const fs = require('fs');
 
 // Создание менеджера сцен ------------------------------------------------------------------------
 const stage = new Scenes.Stage();
-stage.register(home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin);
+stage.register(home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin, addOnBlock);
 // Непосредственный запуск опроса------------------------------------------------------------------
 let urls = [];
 begin();
