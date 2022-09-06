@@ -263,7 +263,7 @@ chengeSubscribe.action('delCurWorker',  (ctx)=>{
     if(indexCoin != -1){
       let indexWorker = users[index].pools[indexCoin].workers.findIndex(item=>item.name==curWorkerName);
       if(indexWorker!=-1){
-        users[index].pools[indexCoin].workers.splice(indexWorker, indexWorker+1);
+        users[index].pools[indexCoin].workers.splice(indexWorker, indexWorker+1); //сделать логи!!!
         if(users[index].pools[indexCoin].workers.length==0){
           users[index].pools.splice(indexCoin, indexCoin+1);
           if (users[index].pools.length==0){
