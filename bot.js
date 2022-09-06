@@ -46,7 +46,7 @@ bot.action('onStart', (ctx)=>{
 bot.launch();
 // Установка параметров запуска бота --------------------------------------------------------------
 function start(){
-  //setInterval(getBlock, settings.monitoringPeriodSec*1000);
+  setInterval(getBlock, settings.monitoringPeriodSec*1000);
   setInterval(getHash, settings.monitoringPeriodSec*1000)
   console.log('Bot started');
   logIt('Bot started');
@@ -97,18 +97,18 @@ function begin(){
 };
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
-  console.log('lastBloks>---', lastBlocks);
-  console.log('urls>---', urls);
+  //console.log('lastBloks>---', lastBlocks);
+  //console.log('urls>---', urls);
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
   )).then(res => {
     res.forEach(item=>{
       if (item.status=='fulfilled'){
         let currBlock = item.value.data[0];
-        console.log('currBlock**', currBlock);
-        console.log('tempBlocks:::', tempBlocks);
+       // console.log('currBlock**', currBlock);
+       // console.log('tempBlocks:::', tempBlocks);
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
-        console.log('tempCurBlock__', tempCurBlock)
+       // console.log('tempCurBlock__', tempCurBlock)
         if (tempCurBlock != undefined){   
           // Подтверждение нового блока ---------------------------------------------------------------
           if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status=='confirmed'){
@@ -169,8 +169,8 @@ function getBlock(){
                           "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
                           "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
                         );
-                        console.log('Sent message about new block to user: Id -> ', curUser.userId);
-                        logIt('Sent message about new block to user: Id -> ', curUser.userId);
+                        console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
+                        logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
                       }catch(err){
                         console.log('Error sending message about new block! ', err);
                         logIt('Error sending message about new block! ', err());
@@ -193,7 +193,7 @@ function getBlock(){
       }
     })    
   }).then(()=>{
-    console.log('lastBlocks!', lastBlocks);
+    //console.log('lastBlocks!', lastBlocks);
     
   });
 };
@@ -211,7 +211,7 @@ function  getHash(){
       }
       urls2.push(obj) 
     })
-    console.log('urls2:',urls2);
+    //console.log('urls2:',urls2);
     Promise.allSettled(urls2.map(item =>
       axios.get(item.url2)
     )).then(res => {
@@ -219,17 +219,19 @@ function  getHash(){
         if (item.status=='fulfilled'){
           if(item.value.data.performance!=undefined){
             let currCoin = item.value.data.performance.workers;
-  
             let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
-            console.log('currCoin>', currCoin);
-            let userCoin = user.pools.find(item => item.pool.id==currCoinId)
-            console.log('user coin>', userCoin);
+          //  console.log('currCoinId>--', currCoinId)
+           // console.log('currCoin>', currCoin);
+            let userCoin = user.pools.find(item2 => item2.pool.id==currCoinId);
+            if(userCoin==undefined) return
+          //  console.log('user.pools>', user.pools);
+          //  console.log('user coin>', userCoin);
             userCoin.workers.forEach(item=>{
-              console.log('currCoin[item.name]>>>', currCoin[item.name],'---', item.name)
+            //  console.log('currCoin[item.name]>>>', currCoin[item.name],'---', item.name)
                
               if (currCoin[(item.name =='default'? '': item.name)]!=undefined){
-                console.log('"', item.name, '" currhash>>', currCoin[(item.name =='default'? '': item.name)].hashrate); 
-                console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
+              //  console.log('"', item.name, '" currhash>>', currCoin[(item.name =='default'? '': item.name)].hashrate); 
+              //  console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
                 if (item.hashLevel*koeff(item.hashDev)>currCoin[(item.name =='default'? '': item.name)].hashrate && item.delivered==false) {
                   console.log('ALARM!'); 
                   bot.telegram.sendMessage(user.userId,
@@ -302,7 +304,7 @@ function  getHash(){
               if (index != -1){
                 user.pools.splice(index, index+1);
                 if(user.pools.length==0){
-                  console.log('....>>',pools.length)
+                // console.log('....>>',pools.length)
                   let index1 =users.findIndex(item=>item.userId == user.userId);
                   if (index1 != -1) users.splice(index1, index1+1);
                 }
@@ -325,108 +327,6 @@ function  getHash(){
       });
     }); 
   });
-
-
-  /*users.forEach(item =>{
-    if(item.wallet==null && item.workers==null) return
-    axios({
-      url: api2  + item.pools.pool.id + '/miners/' + item.pools.wallet,
-      method: 'get',
-      timeout: 2000})
-    .then((response)=> {
-      if(response.data.performance==undefined){
-        try{
-          bot.telegram.sendMessage(item.userId,
-            '<b>Внимание!</b>\n' +
-            'Ваш кошелек <b>' + item.wallet   + '</b>\n' +
-            'неактуален!\n' +
-            'Пользователь с этим кошельком автоматически <b>удален</b> из списка оповещения.' + 
-            'Для возобновления оповещения подпишитесь снова', 
-            {parse_mode: 'HTML'}  
-          );
-          let index = users.findIndex(user => user.userId == item.userId);
-          if (index != -1){
-            users.splice(index, index+1);
-
-            console.log('Wallet ' + item.wallet + ' of user ' + item.userId +' is invalid!');
-            console.log('Removed user: Id -> ', item.userId);
-            console.log('Total Users: ', users.length);
-            logIt('Broken wallet ' + item.wallet + ' of user ' + item.userId +' is invalid!');       
-            logIt('Removed user: Id -> ', item.userId);
-            logIt('Total Users: ', users.length);
-
-            saveChanges(); 
-         }
-        }catch(err){
-          console.log('API ERORR! Performance request: ', err);
-          logIt('API ERORR! Performance request: ', err);
-        }
-        return
-      }
-      let allWorkers = response.data.performance.workers; // Все сущесивующие воркеры
-      let controlledWorkers = item.workers; // Все контрорлируемые воркеры
-      // Цикл проверки воркеров -------------------------------------------------------------------
-      controlledWorkers.forEach(itemCW=>{
-        if (itemCW.name=='default') itemCW.name= '';
-          if (allWorkers[itemCW.name]!=undefined){
-            let itemAWhash = allWorkers[itemCW.name].hashrate;
-            let itemPorog = itemCW.hashLevel*koeff(itemCW.hashDev)
-            if (itemAWhash<itemPorog && itemCW.delivered==false){    
-              try{
-                bot.telegram.sendMessage(item.userId,
-                  '<b>Предупреждение!</b>\n' +
-                  'Хешрейт воркера '   + '«<b>' +  `${itemCW.name ==''? 'default': itemCW.name}` + '</b>»' + '\n' +
-                  'кошелька: <b>' + item.wallet   + '</b> \n' +
-                  'опустился ниже установленного в <b>'  +  itemCW.hashLevel   +' '  +  itemCW.hashDev + '</b>\n' +
-                  'и составляет <b>'  +  formatHashrate(itemAWhash)+ '</b>\n' +
-                  'Оповещение об уровне хешрейта этого воркера <b>отключено!</b>.\n' +
-                  'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта', 
-                  {parse_mode: 'HTML'}
-                );
-                itemCW.delivered = true;
-                console.log('A hashrate message has been sent to the user: Id -> ', item.userId);
-                logIt('A hashrate message has been sent to the user: Id -> ', item.userId);
-                saveChanges()
-              }catch(err){
-                console.log('Error sending message about hashrate! ', err);
-                logIt('Error sending message about hashrate! ', err);
-                bot.telegram.sendMessage(settings.adminId, 'Error sending message about hashrate!  \n' + err);
-              }    
-            }
-        }else{
-          if (itemCW.delivered==false){
-            bot.telegram.sendMessage(item.userId,  
-              '<b>Внимание!</b>\n' +        
-              'Воркер '   + '«<b>' +  `${itemCW.name ==''? 'default': itemCW.name}` + '</b>»' + ' для кошелька' +'\n' +
-              '<b>' + item.wallet  + '</b>' +'\n' +
-              '<b><u>не функционирует</u>!</b> \n' +
-              'Он автоматически <b>удален</b> из Вашего списка контролируемых воркеров.\n' + 
-              'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта',
-              {parse_mode: 'HTML'}
-            );
-            let index = controlledWorkers.findIndex(item=>item.name == itemCW.name);
-            if (index != -1){
-              controlledWorkers.splice(index, index+1);
-              console.log('Broken worker: «' + itemCW.name + '» of wallet: "' + item.wallet + ' deleted!');
-              logIt('Broken worker: «' + itemCW.name + '» of wallet ' + item.wallet + ' deleted!');
-              saveChanges();
-           }
-          }
-        }
-      })
-      //-------------------------------------------------------------------------------------------
-      if (response.data.performance == undefined){
-        console.log('Hash polling error!');
-        logIt('Hash polling error! bot.js 194 стр');
-        return
-      }
-    }).catch(function (error){
-       console.log('API ERORR! Hashrate request: ', error);
-       logIt('API ERORR! Hashrate request: ', error);
-       bot.telegram.sendMessage(settings.adminId, 'API ERORR! Hashrate request: \n' + error);
-      return
-     })
-  })*/
 }
 // Запись новых данных о пользователях в файл -----------------------------------------------------
 function saveChanges(){
