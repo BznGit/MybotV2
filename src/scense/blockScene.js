@@ -18,7 +18,7 @@ const onBlock = new Scenes.WizardScene(
       let coins =[];
       pools.forEach(item=>{
         coins.push({id : item.id, name : item.coin.name});
-      });
+      }); 
       ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});

@@ -96,6 +96,12 @@ const chengeSubscribe = new Scenes.WizardScene(
       let curWorkerIndex = currWorkers.findIndex(item=>item.name == choosedWorker);
       if (curWorkerIndex!=-1){
         ctx.wizard.state.curWorkerIndex = curWorkerIndex;
+        ctx.reply('Выберите действие:', {
+          parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            [{ text: "Изменить воркер", callback_data: "chengeWorker" },{ text: "Удалить воркер", callback_data: "delWorker" },],    
+          ])
+        })
       } else {  
         let worker = {
           name: ctx.message.text,
@@ -104,7 +110,7 @@ const chengeSubscribe = new Scenes.WizardScene(
           delivered: false
         }
         ctx.wizard.state.tempWorker = worker;
-      }
+       
       ctx.wizard.state.stepError = true;
       ctx.reply('Выберите размерность порогового уровня хешрейта:', {
         parse_mode: 'HTML',
@@ -114,8 +120,9 @@ const chengeSubscribe = new Scenes.WizardScene(
         ])
       })
       return ctx.wizard.next()
-    },     
-    // Шаг 4: Изменение хешрейта ------------------------------------------------------------------
+    }
+    }, 
+    // Шаг 5: Изменение хешрейта ------------------------------------------------------------------
     (ctx) => {
       if (ctx.wizard.state.stepError) {
         ctx.reply('Выберите кнопками выше!'); 
@@ -202,6 +209,7 @@ chengeSubscribe.action('delCoin',  (ctx)=>{
   ctx.scene.leave();
   ctx.scene.enter("delCoinSceneWizard") 
 });
+
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('changeCoin',  (ctx)=>{
   let  curUser = users.find(item=>item.userId == ctx.chat.id); 
@@ -220,7 +228,68 @@ chengeSubscribe.action('chooseWallet',  (ctx)=>{
   ctx.reply('Введите кошелек:')
   ctx.wizard.selectStep(2);
 });
-// Обработчик изменения воркера -------------------------------------------------------------------
+// Обработчик изменения воркера  ------------------------------------------------------------------
+chengeSubscribe.action('chengeWorker',  (ctx)=>{
+  ctx.wizard.state.stepError = true;
+      ctx.reply('Выберите размерность порогового уровня хешрейта:', {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [{ text: "KH/s", callback_data: "chooseK" },{ text: "MH/s", callback_data: "chooseM" },{ text: "GH/s", callback_data: "chooseG" }],
+          [{ text: "TH/s", callback_data: "chooseT" },{ text: "PH/s", callback_data: "chooseP" }],      
+        ])
+      })
+      return ctx.wizard.next();
+});
+// Обработчик удаления воркера  ------------------------------------------------------------------
+chengeSubscribe.action('delWorker',  (ctx)=>{
+  ctx.wizard.state.stepError = true;
+      let curWorkerName = ctx.wizard.state.pool.workers[ctx.wizard.state.curWorkerIndex].name; 
+      console.log('curWorkerName...>>',curWorkerName );
+      let text = 'Вы действительно хотите удалить воркер «'+curWorkerName +'»';
+      ctx.reply(text,  {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+          [{ text: "Да", callback_data: "delCurWorker" },{ text: "Нет", callback_data: "back" }],
+        
+        ])
+      })
+});
+chengeSubscribe.action('delCurWorker',  (ctx)=>{
+  ctx.wizard.state.stepError = true;
+  let curWorkerName = ctx.wizard.state.pool.workers[ctx.wizard.state.curWorkerIndex].name; 
+  let index = users.findIndex(item=>item.userId == ctx.chat.id);
+  if (index != -1){
+    let indexCoin = users[index].pools.findIndex(item=>item.pool.id==ctx.wizard.state.pool.pool.id);
+    if(indexCoin != -1){
+      let indexWorker = users[index].pools[indexCoin].workers.findIndex(item=>item.name==curWorkerName);
+      if(indexWorker!=-1){
+        users[index].pools[indexCoin].workers.splice(indexWorker, indexWorker+1);
+        if(users[index].pools[indexCoin].workers.length==0){
+          users[index].pools.splice(indexCoin, indexCoin+1);
+          if (users[index].pools.length==0){
+            users.splice(index, index+1);
+          }
+        }
+      }
+    }
+  } 
+  try{
+    fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
+    console.log('User data changed: Id -> ', ctx.chat.id);
+    logIt('User data changed: Id -> ', ctx.chat.id);
+  }catch(err){
+    console.log('Error writing to user changes file: ', err);
+    logIt('Error writing to user changes file: ', err);
+  }
+  ctx.reply('Ваши данные изменены!');
+  ctx.scene.leave();
+  ctx.reply(settings.wellcomeText, {parse_mode: 'HTML',
+    ...Markup.inlineKeyboard([
+   { text: "Продолжить", callback_data: 'onStart' },    
+    ])
+  });
+});
+// Обработчик выбора воркера -------------------------------------------------------------------
 chengeSubscribe.action('chooseWorker',  (ctx)=>{
   axios.get(api + '/api/pools/' + ctx.wizard.state.pool.pool.id + '/miners/' + ctx.wizard.state.pool.wallet)
   .then((response)=> {
