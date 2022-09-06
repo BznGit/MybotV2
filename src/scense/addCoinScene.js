@@ -47,13 +47,6 @@ const addCoin = new Scenes.WizardScene(
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
       return
     } 
-  /*  ctx.reply('Сейчас у Вас нет подписки на оповещение о появлении нового блока и падении текущего хешрейта воркеров', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-         Markup.button.callback('Подписаться на оповещение о хешрейте', 'nextStepOnSub'),
-         Markup.button.callback('Подписаться только на оповещение о блоке', 'addBlockSub'),       
-      ])
-    })*/
 
     ctx.reply('Подписаться на повещение о блоке <b>' +ctx.message.text + '</b>' , {
       parse_mode: 'HTML',
@@ -153,7 +146,6 @@ const addCoin = new Scenes.WizardScene(
         { text: "Нет", callback_data: 'back' }
       ])
     })
-     
   } 
 );
 // Ethereum ---------------------------------------------------------------------------------------
@@ -163,10 +155,6 @@ addCoin.action('subBlock',  (ctx)=>{
   ctx.wizard.state.block = 'да'
   ctx.reply('Введите кошелек ' + ctx.wizard.state.pool.name + ':');
 });
-// Обработчик подписки на только на новый блок -----------------------------------------------------------
-/*addCoin.action('addBlockSub',  (ctx)=>{
-  ctx.scene.enter("addBlockSceneWizard")  
-});*/
 // Обработчики выбора единиц измерения ------------------------------------------------------------
 addCoin.action('chooseK',  (ctx)=>{
   ctx.wizard.state.stepError = false;

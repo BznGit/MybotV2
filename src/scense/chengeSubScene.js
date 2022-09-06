@@ -179,9 +179,23 @@ const chengeSubscribe = new Scenes.WizardScene(
 );
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('addCoin',  (ctx)=>{
-  
+  ctx.reply('Выберете необходимое действие:', {
+    parse_mode: 'HTML',
+    ...Markup.inlineKeyboard([
+       Markup.button.callback('Подписаться на оповещение о хешрейте', 'addCoinHash'),
+       Markup.button.callback('Подписаться на оповещение о блоке', 'addBlockSub'),       
+    ])
+  })
+});
+// Обработчик добавления оповещения о хешрейте ----------------------------------------------------
+chengeSubscribe.action('addCoinHash',  (ctx)=>{
   ctx.scene.leave();
-  ctx.scene.enter("addCoinSceneWizard") 
+  ctx.scene.enter("addCoinSceneWizard"); 
+});
+// Обработчик добавления оповещения о блоке -------------------------------------------------------
+chengeSubscribe.action('addBlockSub',  (ctx)=>{
+  ctx.scene.leave();
+  ctx.scene.enter("addBlockSceneWizard"); 
 });
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('delCoin',  (ctx)=>{
