@@ -15,7 +15,7 @@ const delCoin = new Scenes.WizardScene(
     ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
     let buttons = [];
     curUser.pools.forEach(item=>{buttons.push(item.pool.name)});
-    ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+    ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',
     Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
     .oneTime().resize());
     return ctx.wizard.next();    
@@ -24,7 +24,7 @@ const delCoin = new Scenes.WizardScene(
   (ctx) => {
     ctx.wizard.state.stepError=false; 
     let curCoin = ctx.wizard.state.pools.find(item=>item.pool.name==ctx.message.text)
-    console.log('curCoin',curCoin)
+    //console.log('curCoin',curCoin)
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
@@ -46,16 +46,18 @@ delCoin.action('delBlock', (ctx)=>{
   let index = users.findIndex(item=>item.userId == ctx.chat.id);
   if (index != -1){
     let indexCoin = users[index].pools.findIndex(item=>item.pool.id==ctx.wizard.state.pool.pool.id)
-    console.log('ctx.wizard.state.pool.id>>',ctx.wizard.state.pool.pool.id);
+    //console.log('ctx.wizard.state.pool.id>>',ctx.wizard.state.pool.pool.id);
+    let delCoin = users[index].pools[indexCoin];
     users[index].pools.splice(indexCoin, indexCoin+1);
+    let delUser = users[index];
     if (users[index].pools.length==0) {
       users.splice(index, index+1)
       try{
         fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-       /* console.log('Removed user: -> ', users);
-        logIt('Removed user: -> ', users[index].pools[indexCoin].pool.name);
-        console.log('Total Users: ', users[index].pools.length);
-        logIt('Total Users: ', users[index].pools.length);*/
+        console.log('All users coins and user ', delUser.userId, ' removed!');
+        logIt('All users coins and user ', delUser.userId, ' removed!' );
+        console.log('Total users ', delUser.pools.length);
+        logIt('Total users: ', users.length);
         ctx.reply('Вы отписались от всех оповещений!')
         ctx.scene.leave();
         ctx.reply(settings.wellcomeText, {parse_mode: 'HTML',
@@ -70,10 +72,10 @@ delCoin.action('delBlock', (ctx)=>{
     }else{
       try{
         fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-        /*console.log('Removed coin: -> ', users[index].pools[indexCoin].pool.name);
-        logIt('Removed coin: -> ', users[index].pools[indexCoin].pool.name);
-        console.log('Total Users: ', users[index].pools.length);
-        logIt('Total Users: ', users[index].pools.length);*/
+        console.log('Coin "', delCoin.pool.name, '"  of user ', delUser.userId, ' removed!');
+        logIt('Coin "', delCoin.pool.name, '"  of user ', delUser.userId, ' removed!');
+        console.log('Total users coins: ', delUser.pools.length);
+        logIt('Total useres coins: ',  delUser.pools.length);
         ctx.reply('Вы отписались от всех оповещений!')
         ctx.scene.leave();
         ctx.reply(settings.wellcomeText, {parse_mode: 'HTML',

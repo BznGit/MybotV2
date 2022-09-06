@@ -74,7 +74,7 @@ onBlock.action('subBlock', (ctx)=>{
     fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
     console.log('New user added: Id -> ', curUser.userId);
     logIt('New user added: Id -> ', curUser.userId);
-    console.log('Total Users: ', users.length);
+    console.log('Total users: ', users.length);
     logIt('Total Users: ', users.length);
   }catch(err){
     console.log('Error writing to new user file: ', err);

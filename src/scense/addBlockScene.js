@@ -22,7 +22,7 @@ const addOnBlock = new Scenes.WizardScene(
       ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
-      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре!:',
+      ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',
       Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });
@@ -31,7 +31,7 @@ const addOnBlock = new Scenes.WizardScene(
   },
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
-    console.log(ctx.chat.type, ctx.chat.id)
+   // console.log(ctx.chat.type, ctx.chat.id)
     ctx.wizard.state.stepError=false; 
     if (ctx.message==undefined){
       ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});
@@ -44,11 +44,11 @@ const addOnBlock = new Scenes.WizardScene(
       return 
     }  
     ctx.wizard.state.curCoin = curCoin;
-    console.log('addBlock curCoin:', ctx.wizard.state.curCoin);
+    //console.log('addBlock curCoin:', ctx.wizard.state.curCoin);
     let index = users.findIndex(item=>item.userId==ctx.chat.id);
-    console.log('index User->', index);
+    ///console.log('index User->', index);
     let tryCoin = users[index].pools.find(item=>item.pool.id==curCoin.id);
-    console.log('tryCoin User->', tryCoin);
+    //console.log('tryCoin User->', tryCoin);
     if (tryCoin != undefined){
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
       return
@@ -68,9 +68,9 @@ const addOnBlock = new Scenes.WizardScene(
 addOnBlock.action('subBlock', (ctx)=>{
   ctx.reply('Вы подписаны на оповещение о блоке!')
   let index = users.findIndex(item=>item.userId==ctx.chat.id);
-  console.log('index User->', index);
+  //console.log('index User->', index);
   let tryCoin = users[index].pools.find(item=>item.pool.id==ctx.wizard.state.curCoin.id);
-  console.log('tryCoin User->', tryCoin);
+  //console.log('tryCoin User->', tryCoin);
   let addingCoin={};
   if (tryCoin == undefined){
     addingCoin =  
@@ -81,16 +81,15 @@ addOnBlock.action('subBlock', (ctx)=>{
       workers : []
     }
     users[index].pools.push(addingCoin);
-  }
-
-  //Запись данных пользователя в файл -------------------------------------------------------------
-  try{
-    fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-    console.log('New coin added:  -> ', addingCoin.pool, 'for user ', users[index].userId);
-    logIt('New coin added:  -> ', addingCoin.pool, 'for user ', users[index].userId);
-  }catch(err){
-    console.log('Error writing to new user file: ', err);
-    logIt('Error writing to new user file: ', err);
+    //Запись данных пользователя в файл -------------------------------------------------------------
+    try{
+      fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
+      console.log('New coin "', addingCoin.pool.name, '" added for a block control by user ', users[index].userId);
+      logIt('New coin "', addingCoin.pool.name, '" added for a block control by user ', users[index].userId);
+    }catch(err){
+      console.log('Error writing a new coin block to file: ', err);
+      logIt('Error writing new coin block to file: ', err);
+    }
   }
    ctx.scene.leave();
    ctx.reply(settings.wellcomeText, {parse_mode: 'HTML',

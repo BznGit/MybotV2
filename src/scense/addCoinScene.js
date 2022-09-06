@@ -22,7 +22,7 @@ const addCoin = new Scenes.WizardScene(
       ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
-      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+      ctx.reply('Выберите одну из монет пула выпадающей клавиатуре:',
       Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });
@@ -39,9 +39,9 @@ const addCoin = new Scenes.WizardScene(
       return 
     }  
     let index = users.findIndex(item=>item.userId==ctx.chat.id);
-    console.log('index User->', index);
+    //console.log('index User->', index);
     let tryCoin = users[index].pools.find(item=>item.pool.id==curCoin.id);
-    console.log('tryCoin User->', tryCoin);
+    //console.log('tryCoin User->', tryCoin);
     if (tryCoin != undefined){
       
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
@@ -195,10 +195,10 @@ addCoin.action('subHash', (ctx)=>{
   //Запись данных пользователя в файл -------------------------------------------------------------
   try{
     fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-    console.log('New coin added -> ', newPool.pool.name);
-    logIt('New user added -> ', newPool.pool.name);
-    console.log('Total coins: ', users[index].pools.length);
-    logIt('Total coins: ', users[index].pools.length);
+    console.log('New coin "', newPool.pool.name, '" added by user', users[index].userId);
+    logIt('New coin "', newPool.pool.name, '" added by user', users[index].userId);
+    console.log('Total users coins:', users[index].pools.length );
+    logIt('Total users coins:', users[index].pools.length);
   }catch(err){
     console.log('Error writing to new user file: ', err);
     logIt('Error writing to new user file: ', err);

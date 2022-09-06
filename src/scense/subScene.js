@@ -22,7 +22,7 @@ const subscribe = new Scenes.WizardScene(
       ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
-      ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+      ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',
       Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });

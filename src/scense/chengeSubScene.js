@@ -208,7 +208,7 @@ chengeSubscribe.action('changeCoin',  (ctx)=>{
   ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
   let buttons = [];
   curUser.pools.forEach(item=>{buttons.push(item.pool.name)});
-  ctx.reply('Выберите одну из монет пула кнопками на клавиатуре:',
+  ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',
   Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
   .oneTime().resize());
   return ctx.wizard.next();
