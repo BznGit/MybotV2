@@ -52,12 +52,10 @@ function start(){
   logIt('Bot started');
 };
 // Получение номера последнего блока---------------------------------------------------------------
-
 var tempBlocks = [];
 let lastBlocks = [];
 let coins =[];
 function begin(){
-  
   users.forEach(item=>{
     item.pools.forEach(coin=>{
       let poolInfo = {
@@ -192,10 +190,7 @@ function getBlock(){
         } 
       }
     })    
-  }).then(()=>{
-    //console.log('lastBlocks!', lastBlocks);
-    
-  });
+  })
 };
 
 // Проверка хешрейта воркеров ----------------------------------------------------------------------
@@ -233,8 +228,9 @@ function  getHash(){
               //  console.log('"', item.name, '" currhash>>', currCoin[(item.name =='default'? '': item.name)].hashrate); 
               //  console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
                 if (item.hashLevel*koeff(item.hashDev)>currCoin[(item.name =='default'? '': item.name)].hashrate && item.delivered==false) {
-                  console.log('ALARM!'); 
-                  bot.telegram.sendMessage(user.userId,
+                  console.log('ALARM!');
+                  try{
+                    bot.telegram.sendMessage(user.userId,
                     '<b>Предупреждение!</b>\n' +
                     'Хешрейт воркера '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + '\n' +
                     'кошелька: <b>' + userCoin.wallet   + '</b> \n' +
@@ -247,21 +243,32 @@ function  getHash(){
                   );
                   item.delivered = true;
                   saveChanges(); 
+                  }catch(err){
+                    console.log('Send hashrate massege error:  ', err);
+                    logIt('Send hashrate massege error:  ', err);
+                  }
                 }
               } 
               else
               {
                 if (item.delivered==false  && item.name!=''){
-                  bot.telegram.sendMessage(user.userId,  
-                    '<b>Внимание!</b>\n' +        
-                    'Воркер '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + ' для кошелька' +'\n' +
-                    '<b>' + userCoin.wallet  + '</b>' +'\n' +
-                    'монеты: <b>' + userCoin.pool.name + '</b> \n' +
-                    '<b><u>не функционирует</u>!</b> \n' +
-                    'Он автоматически <b>удален</b> из Вашего списка контролируемых воркеров.\n' + 
-                    'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта',
-                    {parse_mode: 'HTML'}
-                  );
+                  try{
+                    bot.telegram.sendMessage(user.userId,  
+                      '<b>Внимание!</b>\n' +        
+                      'Воркер '   + '«<b>' +  `${item.name ==''? 'default': item.name}` + '</b>»' + ' для кошелька' +'\n' +
+                      '<b>' + userCoin.wallet  + '</b>' +'\n' +
+                      'монеты: <b>' + userCoin.pool.name + '</b> \n' +
+                      '<b><u>не функционирует</u>!</b> \n' +
+                      'Он автоматически <b>удален</b> из Вашего списка контролируемых воркеров.\n' + 
+                      'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта',
+                      {parse_mode: 'HTML'}
+                    );
+                    
+                  }catch(err){
+                    console.log('Send broken worker massege error:  ', err);
+                    logIt('Send broken worker massege error:  ', err);
+                    
+                  }
                   let index2 = userCoin.workers.findIndex(item1=>item1.name == item.name);
                   if (index2 != -1){
                     userCoin.workers.splice(index2, index2+1);
@@ -281,7 +288,7 @@ function  getHash(){
                     console.log('Broken worker: «' + item.name + '» of wallet: "' + item.wallet + ' deleted!');
                     logIt('Broken worker: «' + item.name + '» of wallet ' + item.wallet + ' deleted!');
                     saveChanges();
-                 }
+                  }
                 }
               }
             })
@@ -338,4 +345,4 @@ function saveChanges(){
   }
 }
 // ------------------------------------------------------------------------------------------------  
-
+module.exports = bot;
