@@ -16,6 +16,7 @@ const {formatHashrate} = require('./src/libs/utils.js');
 const {koeff} = require('./src/libs/utils.js');
 const {logIt} = require('./src/libs/loger.js');
 const fs = require('fs');
+const { brotliCompress } = require('zlib');
 
 // Создание менеджера сцен ------------------------------------------------------------------------
 const stage = new Scenes.Stage();
@@ -37,6 +38,13 @@ bot.start((ctx) =>{
      { text: "Продолжить", callback_data: 'onStart' },    
       ])
   })
+})
+//Запрос админа на количестово пользователей ------------------------------------------------------
+bot.hears('total', ctx => {
+  if(ctx.chat.id==settings.adminId) 
+    ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}`)
+  else 
+    ctx.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
 })
 // Обработчик события при старте ------------------------------------------------------------------
 bot.action('onStart', (ctx)=>{
@@ -95,22 +103,16 @@ function begin(){
 };
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
-  //console.log('lastBloks>---', lastBlocks);
-  //console.log('urls>---', urls);
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
   )).then(res => {
     res.forEach(item=>{
       if (item.status=='fulfilled'){
         let currBlock = item.value.data[0];
-       // console.log('currBlock**', currBlock);
-       // console.log('tempBlocks:::', tempBlocks);
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
-       // console.log('tempCurBlock__', tempCurBlock)
         if (tempCurBlock != undefined){   
           // Подтверждение нового блока ---------------------------------------------------------------
-          if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status=='confirmed'){
-            //console.log('Active users:', users);
+          if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status=='confirmed'){   
             if (users.length!=0){        
               users.forEach(curUser => {
                 curUser.pools.forEach(curUserCoin=>{
@@ -130,8 +132,8 @@ function getBlock(){
                           "<b>- майнер: </b>" +    currBlock.miner +";\n"+
                           "<b>- создан: </b>" +    currBlock.created, {parse_mode: 'HTML'}
                         ); 
-                        console.log('Block confirmation message sent to user: Id -> ', curUser.userId);
-                        logIt('Block confirmation message sent to user: Id ->', curUser.userId)
+                        console.log('Block confirmation message sent to user: ', curUser.userId);
+                        logIt('Block confirmation message sent to user: ', curUser.userId)
                       }catch(err){
                         console.log('Error sending message about confirmed block! ', err);
                         logIt('Error sending message about confirmed block! ', err);
@@ -181,7 +183,6 @@ function getBlock(){
                       status: currBlock.status
                     } 
                     tempBlocks.push(tempBlock)
-                    console.log('tempBlock++',tempBlocks)
                   }
                 }
               }
@@ -198,6 +199,7 @@ function  getHash(){
   let urls2=[];
   users.forEach(user =>{
     let pools = user.pools;
+    //подготовка адресов опроса ----
     pools.forEach(coin=>{
       if(coin.wallet==null && coin.workers.length==0) return
       let obj ={
@@ -206,7 +208,7 @@ function  getHash(){
       }
       urls2.push(obj) 
     })
-    //console.log('urls2:',urls2);
+    //опрос адресов ----
     Promise.allSettled(urls2.map(item =>
       axios.get(item.url2)
     )).then(res => {
@@ -215,18 +217,10 @@ function  getHash(){
           if(item.value.data.performance!=undefined){
             let currCoin = item.value.data.performance.workers;
             let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
-          //  console.log('currCoinId>--', currCoinId)
-           // console.log('currCoin>', currCoin);
             let userCoin = user.pools.find(item2 => item2.pool.id==currCoinId);
             if(userCoin==undefined) return
-          //  console.log('user.pools>', user.pools);
-          //  console.log('user coin>', userCoin);
-            userCoin.workers.forEach(item=>{
-            //  console.log('currCoin[item.name]>>>', currCoin[item.name],'---', item.name)
-               
+            userCoin.workers.forEach(item=>{           
               if (currCoin[(item.name =='default'? '': item.name)]!=undefined){
-              //  console.log('"', item.name, '" currhash>>', currCoin[(item.name =='default'? '': item.name)].hashrate); 
-              //  console.log('sethash >>', item.hashLevel*koeff(item.hashDev)); 
                 if (item.hashLevel*koeff(item.hashDev)>currCoin[(item.name =='default'? '': item.name)].hashrate && item.delivered==false) {
                   console.log('ALARM!');
                   try{
@@ -263,31 +257,29 @@ function  getHash(){
                       'Для возобновления оповещения для этого воркера устовновите новый уровень хешрейта',
                       {parse_mode: 'HTML'}
                     );
-                    
+                    let index2 = userCoin.workers.findIndex(item1=>item1.name == item.name);
+                    if (index2 != -1){
+                      userCoin.workers.splice(index2, index2+1);
+                      if(userCoin.workers.length == 0){
+                        let index3 =user.pools.findIndex(item2=>item2.pool.name == userCoin.pool.name);
+                        if (index3 != -1) {
+                          user.pools.splice(index3, index3+1);
+                          console.log('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
+                          logIt('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
+                          if(user.pools.length==0){
+                            console.log('....>>',pools.length)
+                            let index1 =users.findIndex(item=>item.userId == user.userId);
+                            if (index1 != -1) users.splice(index1, index1+1);
+                          }
+                        }
+                      }
+                      console.log('Broken worker: «' + item.name + '» of wallet: "' + item.wallet + ' deleted!');
+                      logIt('Broken worker: «' + item.name + '» of wallet ' + item.wallet + ' deleted!');
+                      saveChanges();
+                    }                   
                   }catch(err){
                     console.log('Send broken worker massege error:  ', err);
                     logIt('Send broken worker massege error:  ', err);
-                    
-                  }
-                  let index2 = userCoin.workers.findIndex(item1=>item1.name == item.name);
-                  if (index2 != -1){
-                    userCoin.workers.splice(index2, index2+1);
-                    if(userCoin.workers.length == 0){
-                      let index3 =user.pools.findIndex(item2=>item2.pool.name == userCoin.pool.name);
-                      if (index3 != -1) {
-                        user.pools.splice(index3, index3+1);
-                        console.log('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
-                        logIt('Coin  «' + userCoin.pool.name + '» hase not conrolled workers and deleted!');
-                        if(user.pools.length==0){
-                          console.log('....>>',pools.length)
-                          let index1 =users.findIndex(item=>item.userId == user.userId);
-                          if (index1 != -1) users.splice(index1, index1+1);
-                        }
-                      }
-                    }
-                    console.log('Broken worker: «' + item.name + '» of wallet: "' + item.wallet + ' deleted!');
-                    logIt('Broken worker: «' + item.name + '» of wallet ' + item.wallet + ' deleted!');
-                    saveChanges();
                   }
                 }
               }
@@ -325,8 +317,8 @@ function  getHash(){
                 saveChanges(); 
               }
             }catch(err){
-              console.log('API ERORR! Performance request: ', err);
-              logIt('API ERORR! Performance request: ', err);
+              console.log('Send broken wallet massege error: ', err);
+              logIt('Send broken wallet massege error: ', err);
             }
             return
           }
@@ -338,7 +330,7 @@ function  getHash(){
 // Запись новых данных о пользователях в файл -----------------------------------------------------
 function saveChanges(){
   try{
-  fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
+    fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
   }catch(err){
     console.log('Error writing to the information file of the delivered message: ', err);
     logIt('Error writing to the information file of the delivered message: ', err);
