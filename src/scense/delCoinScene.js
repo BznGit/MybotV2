@@ -31,7 +31,7 @@ const delCoin = new Scenes.WizardScene(
       return 
     }  
 
-    ctx.reply(`${ctx.wizard.state.pools.length==1?'При удалении последней монеты вы буде полностью удалены из списка повещения' :  'Удалить монету <b>'   + ctx.message.text + '</b>'}` , {
+    ctx.reply(`${ctx.wizard.state.pools.length==1?'При удалении последней монеты вы будете полностью удалены из списка повещения' :  'Удалить монету <b>'   + ctx.message.text + '</b>'}` , {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         { text: "Да", callback_data: 'delBlock' }, 
@@ -56,7 +56,7 @@ delCoin.action('delBlock', (ctx)=>{
         fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
         console.log('All users coins and user ', delUser.userId, ' removed!');
         logIt('All users coins and user ', delUser.userId, ' removed!' );
-        console.log('Total users ', delUser.pools.length);
+        console.log('Total users ',  users.length);
         logIt('Total users: ', users.length);
         ctx.reply('Вы отписались от всех оповещений!')
         ctx.scene.leave();

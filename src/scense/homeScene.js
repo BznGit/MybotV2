@@ -34,8 +34,8 @@ const home = new Scenes.WizardScene(
           return  ctx.reply('Сейчас у Вас нет подписки на оповещение о появлении нового блока и падении текущего хешрейта воркеров', {
                     parse_mode: 'HTML',
                     ...Markup.inlineKeyboard([
-                       Markup.button.callback('Подписаться на оповещение о хешрейте', 'onSub'),
-                       Markup.button.callback('Подписаться на оповещение о блоке', 'blockSub'),       
+                       Markup.button.callback('Подписаться на хешрейт', 'onSub'),
+                       Markup.button.callback('Подписаться на блок', 'blockSub'),       
                     ])
                   })
         }catch(err){

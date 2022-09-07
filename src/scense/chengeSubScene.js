@@ -86,6 +86,7 @@ const chengeSubscribe = new Scenes.WizardScene(
     }, 
     // Шаг 3: Изменение воркера и единицы измерения -----------------------------------------------
     (ctx) => {
+      
       if (!ctx.wizard.state.tempWorkerNames.includes(ctx.message.text) && !ctx.wizard.state.stepError){
         ctx.reply(`Воркера «${ctx.message.text}» не существует!`);
         return 
@@ -189,8 +190,8 @@ chengeSubscribe.action('addCoin',  (ctx)=>{
   ctx.reply('Выберете необходимое действие:', {
     parse_mode: 'HTML',
     ...Markup.inlineKeyboard([
-       Markup.button.callback('Подписаться на оповещение о хешрейте', 'addCoinHash'),
-       Markup.button.callback('Подписаться на оповещение о блоке', 'addBlockSub'),       
+       Markup.button.callback('Подписаться на хешрейт', 'addCoinHash'),
+       Markup.button.callback('Подписаться на блок', 'addBlockSub'),       
     ])
   })
 });
@@ -380,7 +381,7 @@ chengeSubscribe.action('subHash', (ctx)=>{
   if(ctx.wizard.state.tempWorker!=undefined){
     ctx.wizard.state.pool.workers.push(ctx.wizard.state.tempWorker) 
   }
-  console.log('ctx.wizard.state.pool.workers>>>',ctx.wizard.state.pool.workers);
+  //console.log('ctx.wizard.state.pool.workers>>>',ctx.wizard.state.pool.workers);
   let changedCoin = {
     pool : ctx.wizard.state.pool.pool,
     wallet : ctx.wizard.state.pool.wallet,
@@ -395,8 +396,8 @@ chengeSubscribe.action('subHash', (ctx)=>{
     //Запись изменений пользователя в файл --------------------------------------------------------
     try{
       fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
-      console.log('User data changed: Id -> ', changedCoin.pool.name);
-      logIt('User data changed: Id -> ', changedCoin.pool.name);
+      console.log('Data of coin "', changedCoin.pool.name, '" chenged by user', ctx.chat.id);
+      logIt('Data of coin "', changedCoin.pool.name, '" chenged by user', ctx.chat.id);
     }catch(err){
       console.log('Error writing to user changes file: ', err);
       logIt('Error writing to user changes file: ', err);
