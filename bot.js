@@ -41,8 +41,11 @@ bot.start((ctx) =>{
 })
 //Запрос админа на количестово пользователей ------------------------------------------------------
 bot.hears('total', ctx => {
-  if(ctx.chat.id==settings.adminId) 
-    ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}`)
+  if(ctx.chat.id==settings.adminId) {
+    ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}` )
+    console.log('ctx.chat>>',ctx.update.message.from)
+    console.log('ctx.chat22>>',ctx.update.message.forward_from)
+  }
   else 
     ctx.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
 })
