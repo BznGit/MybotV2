@@ -2,7 +2,8 @@
     "telegramBotToken": "5188858155:AAGARVJ3PKMEp4rKvu6VQTR7hcV7QjkRqmE",
     "MiningCoreApiEndpoints":"http://ethcore.ru:4000",
     "monitoringPeriodSec": "60",
-    "adminId":"886960493", 
+    "adminId":"886960493",
+    "channelId":"-1542546178", 
     "wellcomeText":"Добро пожаловать в чат-бот поддержки пользователей\n <b>ETHCORE MINING POOL</b>\nДля начала работы с ботом нажмите «Продолжить»",
     "eventsLoger": false
 }

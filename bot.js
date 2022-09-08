@@ -43,15 +43,15 @@ bot.start((ctx) =>{
 bot.hears('total', ctx => {
   if(ctx.chat.id==settings.adminId) {
     ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}` )
-    console.log('ctx.chat>>',ctx.update.message.from)
-    console.log('ctx.chat22>>',ctx.update.message.forward_from)
+    bot.telegram.sendMessage(settings.channelId, `Hello everyone!`)
   }
   else 
-    ctx.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
+    bot.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
 })
 // Обработчик события при старте ------------------------------------------------------------------
 bot.action('onStart', (ctx)=>{
   ctx.scene.enter("homeSceneWizard")
+
 })
 // Запуск бота-------------------------------------------------------------------------------------
 bot.launch();
@@ -135,6 +135,7 @@ function getBlock(){
                           "<b>- майнер: </b>" +    currBlock.miner +";\n"+
                           "<b>- создан: </b>" +    currBlock.created, {parse_mode: 'HTML'}
                         ); 
+                        
                         console.log('Block confirmation message sent to user: ', curUser.userId);
                         logIt('Block confirmation message sent to user: ', curUser.userId)
                       }catch(err){
