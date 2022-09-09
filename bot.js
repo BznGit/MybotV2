@@ -67,45 +67,46 @@ var tempBlocks = [];
 let lastBlocks = [];
 let coins =[];
 function begin(){
-  users.forEach(item=>{
-    item.pools.forEach(coin=>{
+
+  axios.get(api )
+  .then((response)=> {
+    let pools = response.data.pools;
+    let coins =[];
+    pools.forEach(item=>{
+      coins.push({id : item.id, name : item.coin.name});
+    });
+    console.log('coins:', coins)
+    coins.forEach(item=>{
       let poolInfo = {
-        url :`${api + coin.pool.id}/blocks/`,
-        id : coin.pool.id
+        url :`${api + item.id}/blocks/`,
+        id : item.id
       };
       urls.push(poolInfo);
-    })
-  });
-
-  Promise.allSettled(urls.map(item =>
+    });
+    
+    Promise.allSettled(urls.map(item =>
     axios.get(item.url)
-  )).then(res => {
-    res.forEach(item=>{
-      if (item.status=='fulfilled'){
-        let block = item.value.data[0];
-        let lastBlock = {
-          poolId : block.poolId,
-          blockHeight : block.blockHeight,
-          status : block.status
+    )).then(res => {
+      res.forEach(item=>{
+        if (item.status=='fulfilled'){
+          let block = item.value.data[0];
+          let lastBlock = {
+            poolId : block.poolId,
+            blockHeight : block.blockHeight,
+            status : block.status
+          }
+          lastBlocks.push(lastBlock);
         }
-        lastBlocks.push(lastBlock);
-      }
-    })    
-  }).then(()=>{
-    axios.get(api)
-    .then((response)=> {
-      let pools = response.data.pools;
-      pools.forEach(item=>{
-        coins.push({id : item.id, name : item.coin.name});
-      });    
+      })    
+    }).then(()=>{
+      console.log('lastBlocks:', lastBlocks)
+        start();
+      })
     })
-    .then(()=>{
-      start();
-    })
-  })
 };
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
+  console.log('urls:', urls)
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
   )).then(res => {
@@ -161,7 +162,7 @@ function getBlock(){
               if(curUserCoin.pool.id==currBlock.poolId){
                 let lastBlockCurCoin = lastBlocks.find(item=>item.poolId==curUserCoin.pool.id);
                 if (lastBlockCurCoin!=-1){
-                  if (lastBlockCurCoin.blockHeight != currBlock.blockHeight){           
+                  if (lastBlockCurCoin.blockHeight == currBlock.blockHeight){           
                     if (curUserCoin.block =='да'){
                       try{
                         let curBlockName = coins.find(item=>item.id==currBlock.poolId);
