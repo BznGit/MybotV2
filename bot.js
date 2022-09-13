@@ -68,7 +68,7 @@ let lastBlocks = [];
 let coins =[];
 function begin(){
 
-  axios.get(api )
+  axios.get(api)
   .then((response)=> {
     let pools = response.data.pools;
     let coins =[];
@@ -163,19 +163,22 @@ function getBlock(){
                 let lastBlockCurCoin = lastBlocks.find(item=>item.poolId==curUserCoin.pool.id);
                 if (lastBlockCurCoin!=-1){
                   if (lastBlockCurCoin.blockHeight == currBlock.blockHeight){           
-                    if (curUserCoin.block =='да'){
+                    if (curUserCoin.block =='да'){                   
+                      let curBlockName = coins.find(item=>item.id==currBlock.poolId);
                       try{
-                        let curBlockName = coins.find(item=>item.id==currBlock.poolId);
-                        bot.telegram.sendMessage(curUser.userId,
-                          '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
-                          'Параметры блока:\n' +
-                          "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                          "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                          "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                          "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
-                        );
-                        console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
-                        logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
+                        if(curBlockName!=undefined){
+                          bot.telegram.sendMessage(curUser.userId,
+                            '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
+                            'Параметры блока:\n' +
+                            "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+                            "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+                            "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+                            "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
+                          );
+                          console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
+                          logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
+                        }
+          
                       }catch(err){
                         console.log('Error sending message about new block! ', err);
                         logIt('Error sending message about new block! ', err());
