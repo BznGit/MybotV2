@@ -66,12 +66,11 @@ function start(){
 var tempBlocks = [];
 let lastBlocks = [];
 let coins =[];
-function begin(){
 
+function begin(){
   axios.get(api)
   .then((response)=> {
     let pools = response.data.pools;
-    let coins =[];
     pools.forEach(item=>{
       coins.push({id : item.id, name : item.coin.name});
     });
@@ -82,7 +81,7 @@ function begin(){
         id : item.id
       };
       urls.push(poolInfo);
-    });
+    })
     
     Promise.allSettled(urls.map(item =>
     axios.get(item.url)
@@ -100,19 +99,20 @@ function begin(){
       })    
     }).then(()=>{
       console.log('lastBlocks:', lastBlocks)
+      console.log('103-coins:', coins)
         start();
       })
-    })
+  })
 };
 // Проверка появления нового блок -----------------------------------------------------------------
 function getBlock(){
-  console.log('urls:', urls)
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
   )).then(res => {
     res.forEach(item=>{
       if (item.status=='fulfilled'){
         let currBlock = item.value.data[0];
+        console.log('currBlock>>>', currBlock);
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
         if (tempCurBlock != undefined){   
           // Подтверждение нового блока ---------------------------------------------------------------
@@ -157,45 +157,49 @@ function getBlock(){
           }
         } else {
           // Проверка появления нового блока ----------------------------------------------------------
-          users.forEach(curUser => {
-            curUser.pools.forEach(curUserCoin=>{
-              if(curUserCoin.pool.id==currBlock.poolId){
-                let lastBlockCurCoin = lastBlocks.find(item=>item.poolId==curUserCoin.pool.id);
-                if (lastBlockCurCoin!=-1){
-                  if (lastBlockCurCoin.blockHeight == currBlock.blockHeight){           
-                    if (curUserCoin.block =='да'){                   
-                      let curBlockName = coins.find(item=>item.id==currBlock.poolId);
-                      try{
-                        if(curBlockName!=undefined){
-                          bot.telegram.sendMessage(curUser.userId,
-                            '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
-                            'Параметры блока:\n' +
-                            "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                            "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                            "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                            "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
-                          );
-                          console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
-                          logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
-                        }
-          
-                      }catch(err){
-                        console.log('Error sending message about new block! ', err);
-                        logIt('Error sending message about new block! ', err());
-                        bot.telegram.sendMessage(settings.adminId, 'Error sending message about new block! \n' + err);
+          let lastBlockCurCoin = lastBlocks.find(item=>item.poolId == currBlock.poolId);
+          if (lastBlockCurCoin != undefined){
+            if (lastBlockCurCoin .blockHeight==currBlock.blockHeight){
+              let tempBlock = {
+                blockId: currBlock.poolId,
+                blockHeight: currBlock.blockHeight,
+                status: currBlock.status
+              } 
+              tempBlocks.push(tempBlock);
+              console.log('currBlock.poolId>>',currBlock.poolId);
+              console.log('ccoins>>',coins);
+              let curBlockName = coins.find(item=>item.id == currBlock.poolId);
+              console.log('new block:', curBlockName);
+              bot.telegram.sendMessage(settings.channelId, 'new block:', curBlockName.name);
+
+              users.forEach(curUser => {
+                let curUserCoin = curUser.pools.find(item=>item.pool.id == currBlock.poolId);
+                if(curUserCoin != undefined){
+                  if (curUserCoin.block =='да'){ 
+                    try{
+                      if(curBlockName!=undefined){
+                        bot.telegram.sendMessage(curUser.userId,
+                          '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
+                          'Параметры блока:\n' +
+                          "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+                          "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+                          "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+                          "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
+                        );
+                        console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
+                        logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
                       }
+        
+                    }catch(err){
+                      console.log('Error sending message about new block! ', err);
+                      logIt('Error sending message about new block! ', err());
+                      bot.telegram.sendMessage(settings.adminId, 'Error sending message about new block! \n' + err);
                     }
-                    let tempBlock = {
-                      blockId: currBlock.poolId,
-                      blockHeight: currBlock.blockHeight,
-                      status: currBlock.status
-                    } 
-                    tempBlocks.push(tempBlock)
                   }
                 }
-              }
-            });
-          });
+              })
+            }
+          }       
         } 
       }
     })    
