@@ -101,8 +101,9 @@ function begin(){
             poolId : block.poolId,
             blockHeight : block.blockHeight,
             status : block.status
-          }
-        lastBlocks.push(lastBlock);
+          } 
+          if (lastBlock.status =='confirmed') tempBlocks.push(lastBlock);
+          lastBlocks.push(lastBlock);
         }
       })    
     }).then(()=>{
