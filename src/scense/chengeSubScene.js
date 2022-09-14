@@ -14,11 +14,11 @@ const chengeSubscribe = new Scenes.WizardScene(
       ctx.reply(`Выберите необходимое действие:`, {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
-          [ { text: "Добавить монету", callback_data: "addCoin" },{ text: "Удалить монету", callback_data: "delCoin" },{ text: "Изменить монету", callback_data: "changeCoin" }],
+          [ { text: "Добавить монету", callback_data: "addCoin" },{ text: "Изменить монету", callback_data: "changeCoin" }],
+          [{ text: "Удалить монету", callback_data: "delCoin" }],
           [{ text: "Назад", callback_data: "back" }],                
         ]) 
       })       
-   
     },
 
     // Шаг 1 --------------------------------------------------------------------------------------
@@ -50,9 +50,7 @@ const chengeSubscribe = new Scenes.WizardScene(
           [{ text: "Оповещение о блоке", callback_data: "chooseblock" }],                
         ]) 
       }) 
-      }
-     
-      
+      } 
     },
      // Шаг 2: Изменение кошелька ------------------------------------------------------------------
     (ctx) => {
@@ -86,7 +84,7 @@ const chengeSubscribe = new Scenes.WizardScene(
     }, 
     // Шаг 3: Изменение воркера и единицы измерения -----------------------------------------------
     (ctx) => {
-      
+
       if (!ctx.wizard.state.tempWorkerNames.includes(ctx.message.text) && !ctx.wizard.state.stepError){
         ctx.reply(`Воркера «${ctx.message.text}» не существует!`);
         return 

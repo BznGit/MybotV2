@@ -30,9 +30,12 @@ const addCoin = new Scenes.WizardScene(
   },
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
-    ctx.wizard.state.stepError=false; 
+    ctx.wizard.state.stepError=false;
+    if (ctx.message==undefined){
+      ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});
+      return
+    } 
     let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
-
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
@@ -60,6 +63,10 @@ const addCoin = new Scenes.WizardScene(
 
   (ctx) => {
     ctx.wizard.state.stepError=false; 
+    if (ctx.message==undefined){
+      ctx.reply('Вы ничего не ввели! Введите кошелек заново', {parse_mode: 'HTML'});
+      return
+    }
     try{
      axios.get(api + '/api/pools/' + ctx.wizard.state.pool.id + '/miners/' + ctx.message.text)
     .then((response)=> {

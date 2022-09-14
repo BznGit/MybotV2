@@ -6,6 +6,7 @@ const api = settings.MiningCoreApiEndpoints;
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
 // Сцена удаления данных пользователя -------------------------------------------------------------
+
 const delCoin = new Scenes.WizardScene(
   "delCoinSceneWizard", 
   // Шаг 1: Подтверждение удаления данных пользователя --------------------------------------------
@@ -23,6 +24,10 @@ const delCoin = new Scenes.WizardScene(
   // Шаг 2: Ввод кошелька -------------------------------------------------------------------------
   (ctx) => {
     ctx.wizard.state.stepError=false; 
+    if (ctx.message==undefined){
+      ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});
+      return
+    }
     let curCoin = ctx.wizard.state.pools.find(item=>item.pool.name==ctx.message.text)
     //console.log('curCoin',curCoin)
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
@@ -41,6 +46,7 @@ const delCoin = new Scenes.WizardScene(
     return ctx.wizard.next();  
   },
 );
+
 // Обработчик удаления данных пользователя --------------------------------------------------------
 delCoin.action('delBlock', (ctx)=>{
   let index = users.findIndex(item=>item.userId == ctx.chat.id);
@@ -97,6 +103,7 @@ delCoin.action('delBlock', (ctx)=>{
     })
   }
 });
+
 // Обработчик кнопки "назад" --------------------------------------------------------------------- 
 delCoin.action('back', (ctx)=> {
   ctx.scene.leave();
@@ -109,8 +116,8 @@ delCoin.command('/back', (ctx) => {
   ...Markup.inlineKeyboard([
     { text: "Продолжить", callback_data: 'onStart' },    
     ])
-})
-})
+  })
+});
 
 module.exports = delCoin;
 

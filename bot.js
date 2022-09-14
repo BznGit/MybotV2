@@ -21,12 +21,14 @@ const { brotliCompress } = require('zlib');
 // Создание менеджера сцен ------------------------------------------------------------------------
 const stage = new Scenes.Stage();
 stage.register(home, subscribe, unSubscribe, chengeSubscribe, onBlock, addCoin, delCoin, addOnBlock);
+
 // Непосредственный запуск опроса------------------------------------------------------------------
-let urls = [];
 begin();
+
 // Создание менеджера сцен ------------------------------------------------------------------------
 bot.use(session());
 bot.use(stage.middleware());
+
 // Действия бота при старте -----------------------------------------------------------------------
 bot.start((ctx) =>{
   if (ctx.from.id != settings.adminId && ctx.chat.type =='group'){
@@ -39,6 +41,7 @@ bot.start((ctx) =>{
       ])
   })
 })
+
 //Запрос админа на количестово пользователей ------------------------------------------------------
 bot.hears('total', ctx => {
   if(ctx.chat.id==settings.adminId) {
@@ -48,25 +51,31 @@ bot.hears('total', ctx => {
   else 
     bot.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
 })
+
 // Обработчик события при старте ------------------------------------------------------------------
 bot.action('onStart', (ctx)=>{
   ctx.scene.enter("homeSceneWizard")
 
 })
+
 // Запуск бота-------------------------------------------------------------------------------------
 bot.launch();
-// Установка параметров запуска бота --------------------------------------------------------------
+
+//// Функция запуска функций опроса с параметрами периодичности ///////////////////////////////////
 function start(){
   setInterval(getBlock, settings.monitoringPeriodSec*1000);
   setInterval(getHash, settings.monitoringPeriodSec*1000)
   console.log('Bot started');
   logIt('Bot started');
 };
-// Получение номера последнего блока---------------------------------------------------------------
-var tempBlocks = [];
+
+// Установка исходных массивов данных -------------------------------------------------------------
+let urls = [];
+let tempBlocks = [];
 let lastBlocks = [];
 let coins =[];
 
+//// Функция подготовки исходных данных для начала монитронга /////////////////////////////////////
 function begin(){
   axios.get(api)
   .then((response)=> {
@@ -74,7 +83,6 @@ function begin(){
     pools.forEach(item=>{
       coins.push({id : item.id, name : item.coin.name});
     });
-    console.log('coins:', coins)
     coins.forEach(item=>{
       let poolInfo = {
         url :`${api + item.id}/blocks/`,
@@ -94,17 +102,16 @@ function begin(){
             blockHeight : block.blockHeight,
             status : block.status
           }
-          lastBlocks.push(lastBlock);
+        lastBlocks.push(lastBlock);
         }
       })    
     }).then(()=>{
-      console.log('lastBlocks:', lastBlocks)
-      console.log('103-coins:', coins)
         start();
       })
   })
 };
-// Проверка появления нового блок -----------------------------------------------------------------
+
+//// Функция проверки появления нового блок и его подтверждения ///////////////////////////////////
 function getBlock(){
   Promise.allSettled(urls.map(item =>
     axios.get(item.url)
@@ -112,12 +119,12 @@ function getBlock(){
     res.forEach(item=>{
       if (item.status=='fulfilled'){
         let currBlock = item.value.data[0];
-        console.log('currBlock>>>', currBlock);
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
         if (tempCurBlock != undefined){   
-          // Подтверждение нового блока ---------------------------------------------------------------
-          if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status == 'confirmed'){  
+          // Подтверждение нового блока ===========================================================
+          if (currBlock.blockHeight == tempCurBlock.blockHeight && currBlock.status == 'confirmed'){  
             let curBlockName = coins.find(item=>item.id == currBlock.poolId); 
+            // Формирование текста сообщения ------------------------------------------------------
             let confirmedBlockText = '<b>Новый блок ' + curBlockName.name + ' подтвержден!</b>\n'+
               'Параметры блока:\n' +
               "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
@@ -128,17 +135,23 @@ function getBlock(){
               "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
               "<b>- майнер: </b>" +    currBlock.miner +";\n"+
               "<b>- создан: </b>" +    currBlock.created;
-            bot.telegram.sendMessage(settings.channelId, confirmedBlockText, {parse_mode: 'HTML'}); 
+            // Отправка сообщения в группу --------------------------------------------------------- 
+            try{
+              bot.telegram.sendMessage(settings.channelId, confirmedBlockText, {parse_mode: 'HTML'}); 
+            }catch(err){
+              console.log('Error GROUP sending message about CONFIRMED block! ', err);
+              logIt('Error sending message about CONFIRMED block! ', err);
+              bot.telegram.sendMessage(settings.adminId, 'Error sending message about CONFIRMED block! \n' + err);
+            }
+            // Отправка сообщения в пользователям -------------------------------------------------
             if (users.length!=0){         
               users.forEach(curUser => {
                 let curUserCoin = curUser.pools.find(item=>item.pool.id == currBlock.poolId);
                 if(curUserCoin != undefined){
                   if (curUserCoin.block =='да'){
                     try{
-                      let curBlockName = coins.find(item=>item.id==currBlock.poolId);
                       bot.telegram.sendMessage(curUser.userId, confirmedBlockText, {parse_mode: 'HTML'}); 
-                      
-                      console.log('Block confirmation message sent to user: ', curUser.userId);
+                      console.log('Block confirmation message send to user: ', curUser.userId);
                       logIt('Block confirmation message sent to user: ', curUser.userId)
                     }catch(err){
                       console.log('Error sending message about confirmed block! ', err);
@@ -149,34 +162,43 @@ function getBlock(){
                 }
               });
             }
+            // Обновление данных о последних блоках -----------------------------------------------  
             let lastBlockIndex = lastBlocks.findIndex(item=>item.poolId==currBlock.poolId);
             lastBlocks[lastBlockIndex].blockHeight = currBlock.blockHeight;
             lastBlocks[lastBlockIndex].status = currBlock.status;
+            // Обновление данных о временных блоках -----------------------------------------------
             let tempCurBlockIndex = tempBlocks.findIndex(item=>item.blockId==currBlock.poolId);
             tempBlocks.splice(tempCurBlockIndex, tempCurBlockIndex+1)
           }
         } else {
-          // Проверка появления нового блока ----------------------------------------------------------
+          // Проверка появления нового блока ======================================================
           let lastBlockCurCoin = lastBlocks.find(item=>item.poolId == currBlock.poolId);
           if (lastBlockCurCoin != undefined){
-            if (lastBlockCurCoin .blockHeight==currBlock.blockHeight){
+            if (lastBlockCurCoin .blockHeight != currBlock.blockHeight){
+              // Формирование временного нового блока ---------------------------------------------
               let tempBlock = {
                 blockId: currBlock.poolId,
                 blockHeight: currBlock.blockHeight,
                 status: currBlock.status
               } 
               tempBlocks.push(tempBlock);
-              console.log('currBlock.poolId>>',currBlock.poolId);
-              console.log('ccoins>>',coins);
+              // Формирование текста сообщения ----------------------------------------------------
               let curBlockName = coins.find(item=>item.id == currBlock.poolId);
-              console.log('new block:', curBlockName);
               let newBlockText = '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
                 'Параметры блока:\n' +
                 "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
                 "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
                 "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
                 "<b>- майнер: </b>" +    currBlock.miner +"\n";
-              bot.telegram.sendMessage(settings.channelId, newBlockText,{parse_mode: 'HTML'});
+              // Отправка соощения в группу -------------------------------------------------------
+              try{
+                bot.telegram.sendMessage(settings.channelId, newBlockText,{parse_mode: 'HTML'});
+              }catch(err){
+                console.log('Error GROUP sending message about NEW block! ', err);
+                logIt('Error GROUP sending message about NEW block! ', err);
+                bot.telegram.sendMessage(settings.adminId, 'Error GROUP sending message about NEW block! \n' + err);
+              }  
+              // Отправка соощения в пользователям ------------------------------------------------
               if (users.length!=0){    
                 users.forEach(curUser => {
                   let curUserCoin = curUser.pools.find(item=>item.pool.id == currBlock.poolId);
@@ -197,7 +219,7 @@ function getBlock(){
                   }
                 })
               }
-             }
+            }
           }       
         } 
       }
@@ -205,12 +227,12 @@ function getBlock(){
   })
 };
 
-// Проверка хешрейта воркеров ----------------------------------------------------------------------
+//// Функция проверка хешрейта воркеров пользователей /////////////////////////////////////////////
 function  getHash(){
   let urls2=[];
   users.forEach(user =>{
     let pools = user.pools;
-    //подготовка адресов опроса ----
+    //подготовка адресов опроса -------------------------------------------------------------------
     pools.forEach(coin=>{
       if(coin.wallet==null && coin.workers.length==0) return
       let obj ={
@@ -219,7 +241,7 @@ function  getHash(){
       }
       urls2.push(obj) 
     })
-    //опрос адресов ----
+    //опрос адресов -------------------------------------------------------------------------------
     Promise.allSettled(urls2.map(item =>
       axios.get(item.url2)
     )).then(res => {
@@ -229,7 +251,7 @@ function  getHash(){
             let currCoin = item.value.data.performance.workers;
             let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
             let userCoin = user.pools.find(item2 => item2.pool.id==currCoinId);
-            if(userCoin==undefined) return
+            if(userCoin == undefined) return
             userCoin.workers.forEach(item=>{           
               if (currCoin[(item.name =='default'? '': item.name)]!=undefined){
                 if (item.hashLevel*koeff(item.hashDev)>currCoin[(item.name =='default'? '': item.name)].hashrate && item.delivered==false) {
@@ -314,7 +336,6 @@ function  getHash(){
               if (index != -1){
                 user.pools.splice(index, index+1);
                 if(user.pools.length==0){
-                // console.log('....>>',pools.length)
                   let index1 =users.findIndex(item=>item.userId == user.userId);
                   if (index1 != -1) users.splice(index1, index1+1);
                 }
@@ -338,7 +359,7 @@ function  getHash(){
     }); 
   });
 }
-// Запись новых данных о пользователях в файл -----------------------------------------------------
+//// Функция записи новых данных о пользователях в файл /////////////////////////////////////////////
 function saveChanges(){
   try{
     fs.writeFileSync('./src/storage/users.json', JSON.stringify(users));
