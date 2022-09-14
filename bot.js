@@ -116,10 +116,19 @@ function getBlock(){
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
         if (tempCurBlock != undefined){   
           // Подтверждение нового блока ---------------------------------------------------------------
-          if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status==' confirmed'){  
+          if (currBlock.blockHeight==tempCurBlock.blockHeight && currBlock.status == 'confirmed'){  
             let curBlockName = coins.find(item=>item.id == currBlock.poolId); 
-            let 
-            bot.telegram.sendMessage(settings.channelId, 'new block: '+ curBlockName.name + 'confirmed'); 
+            let confirmedBlockText = '<b>Новый блок ' + curBlockName.name + ' подтвержден!</b>\n'+
+              'Параметры блока:\n' +
+              "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+              "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+              `<b>- тип: </b>  ${currBlock.type==undefined? 'block': currBlock.type};\n`+
+              "<b>- усилие: </b>" + Math.trunc(currBlock.effort*100)+"%" +";\n"+
+              "<b>- награда: </b>" + currBlock.reward +";\n"+
+              "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+              "<b>- майнер: </b>" +    currBlock.miner +";\n"+
+              "<b>- создан: </b>" +    currBlock.created;
+            bot.telegram.sendMessage(settings.channelId, confirmedBlockText, {parse_mode: 'HTML'}); 
             if (users.length!=0){         
               users.forEach(curUser => {
                 let curUserCoin = curUser.pools.find(item=>item.pool.id == currBlock.poolId);
@@ -127,18 +136,7 @@ function getBlock(){
                   if (curUserCoin.block =='да'){
                     try{
                       let curBlockName = coins.find(item=>item.id==currBlock.poolId);
-                      bot.telegram.sendMessage(curUser.userId,
-                        '<b>Новый блок ' + curBlockName.name + ' подтвержден!</b>\n'+
-                        'Параметры блока:\n' +
-                        "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                        "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                        `<b>- тип: </b>  ${currBlock.type==undefined? 'block': currBlock.type};\n`+
-                        "<b>- усилие: </b>" + Math.trunc(currBlock.effort*100)+"%" +";\n"+
-                        "<b>- награда: </b>" + currBlock.reward +";\n"+
-                        "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                        "<b>- майнер: </b>" +    currBlock.miner +";\n"+
-                        "<b>- создан: </b>" +    currBlock.created, {parse_mode: 'HTML'}
-                      ); 
+                      bot.telegram.sendMessage(curUser.userId, confirmedBlockText, {parse_mode: 'HTML'}); 
                       
                       console.log('Block confirmation message sent to user: ', curUser.userId);
                       logIt('Block confirmation message sent to user: ', curUser.userId)
@@ -172,7 +170,13 @@ function getBlock(){
               console.log('ccoins>>',coins);
               let curBlockName = coins.find(item=>item.id == currBlock.poolId);
               console.log('new block:', curBlockName);
-              bot.telegram.sendMessage(settings.channelId, 'new block: '+ curBlockName.name);
+              let newBlockText = '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
+                'Параметры блока:\n' +
+                "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
+                "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
+                "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
+                "<b>- майнер: </b>" +    currBlock.miner +"\n";
+              bot.telegram.sendMessage(settings.channelId, newBlockText,{parse_mode: 'HTML'});
               if (users.length!=0){    
                 users.forEach(curUser => {
                   let curUserCoin = curUser.pools.find(item=>item.pool.id == currBlock.poolId);
@@ -180,14 +184,7 @@ function getBlock(){
                     if (curUserCoin.block =='да'){ 
                       try{
                         if(curBlockName!=undefined){
-                          bot.telegram.sendMessage(curUser.userId,
-                            '<b>Найден новый блок ' + curBlockName.name + '!</b>\n' +
-                            'Параметры блока:\n' +
-                            "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
-                            "<b>- сложность сети: </b>" + currBlock.networkDifficulty +";\n"+
-                            "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
-                            "<b>- майнер: </b>" +    currBlock.miner +"\n", {parse_mode: 'HTML'}
-                          );
+                          bot.telegram.sendMessage(curUser.userId, newBlockText,{parse_mode: 'HTML'});
                           console.log('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
                           logIt('Sent message about new block ',curBlockName.name, ' to user: Id -> ', curUser.userId);
                         }
