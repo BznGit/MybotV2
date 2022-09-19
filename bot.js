@@ -230,8 +230,8 @@ function getBlock(){
 
 //// Функция проверка хешрейта воркеров пользователей /////////////////////////////////////////////
 function  getHash(){
-  let urls2=[];
   users.forEach(user =>{
+    let urls2=[];
     let pools = user.pools;
     //подготовка адресов опроса -------------------------------------------------------------------
     pools.forEach(coin=>{
@@ -248,7 +248,7 @@ function  getHash(){
     )).then(res => {
       res.forEach(item=>{
         if (item.status=='fulfilled'){
-          if(item.value.data.performance!=undefined){
+          if(item.value.data.performance != undefined){
             let currCoin = item.value.data.performance.workers;
             let currCoinId = item.value.config.url.match(new RegExp("pools/(.*)/miners"))[1];
             let userCoin = user.pools.find(item2 => item2.pool.id==currCoinId);
