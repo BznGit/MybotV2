@@ -4,7 +4,7 @@
     "monitoringPeriodSec": "5",
     "adminId":"886960493",
     "channelId":"-519666635",
-    "channelIdMain":"-1542546178", 
+    "channelIdMain":"-1001542546178", 
     "wellcomeText":"Добро пожаловать в чат-бот поддержки пользователей\n <b>ETHCORE MINING POOL</b>\nДля начала работы с ботом нажмите «Продолжить»",
     "eventsLoger": false
 }

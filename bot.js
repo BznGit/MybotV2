@@ -46,7 +46,7 @@ bot.start((ctx) =>{
 bot.hears('total', ctx => {
   if(ctx.chat.id==settings.adminId) {
     ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}` )
-    bot.telegram.sendMessage(settings.channelId, `Hello everyone!`)
+    bot.telegram.sendMessage(settings.channelIdMain, `Hello everyone!`)
   }
   else 
     bot.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
