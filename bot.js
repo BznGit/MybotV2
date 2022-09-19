@@ -197,7 +197,7 @@ function getBlock(){
                   }
                 })
               }
-             }
+            }
           }       
         } 
       }
