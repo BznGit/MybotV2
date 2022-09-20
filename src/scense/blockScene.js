@@ -43,7 +43,7 @@ const onBlock = new Scenes.WizardScene(
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
       return 
     }  
-    ctx.reply('Подписаться на оповщение о блоке <b>' + ctx.message.text + '</b>', {
+    ctx.reply('Подписаться на оповещение о блоке <b>' + ctx.message.text + '</b>', {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         { text: "Да", callback_data: 'subBlock' }, 
