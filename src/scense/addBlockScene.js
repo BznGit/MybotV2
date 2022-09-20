@@ -53,7 +53,7 @@ const addOnBlock = new Scenes.WizardScene(
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
       return
     }
-    ctx.reply('Подписаться на оповщение о блоке <b>' + ctx.message.text + '</b>', {
+    ctx.reply('Подписаться на оповeщение о блоке <b>' + ctx.message.text + '</b>', {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         { text: "Да", callback_data: 'subBlock' }, 
