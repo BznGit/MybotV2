@@ -22,7 +22,7 @@ const addCoin = new Scenes.WizardScene(
       ctx.wizard.state.coins = coins;
       let buttons = [];
       coins.forEach(item=>{buttons.push(item.name)});
-      ctx.reply('Выберите одну из монет пула выпадающей клавиатуре:',
+      ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',
       Markup.keyboard(buttons, { wrap: (btn, index, currentRow) => currentRow.length >= 5 })
       .oneTime().resize());     
     });
@@ -142,7 +142,7 @@ const addCoin = new Scenes.WizardScene(
       '<b>- оповещение о новом блоке: </b>«'  + ctx.wizard.state.block + '»;\n' +
       '<b>- кошелек: </b>' + ctx.wizard.state.wallet + ';\n' +
       '<b>- воркер: «</b>'  + ctx.wizard.state.worker.name + '»;\n' +
-      '<b>- оповещение об уровене хешрейта: </b>'  + ctx.wizard.state.worker.hashLevel + ' ' + ctx.wizard.state.worker.hashDev,
+      '<b>- оповещение об уровне хешрейта: </b>'  + ctx.wizard.state.worker.hashLevel + ' ' + ctx.wizard.state.worker.hashDev,
       {parse_mode: 'HTML'}
     )
   
@@ -166,7 +166,7 @@ addCoin.action('subBlock',  (ctx)=>{
 addCoin.action('chooseK',  (ctx)=>{
   ctx.wizard.state.stepError = false;
   ctx.wizard.state.worker.hashDev = 'KH/s'
-  ctx.reply('Введите значение порогового уровня хашрейта в KH/s:');
+  ctx.reply('Введите значение порогового уровня хешрейта в KH/s:');
 });
 addCoin.action('chooseM',  (ctx)=>{
   ctx.wizard.state.stepError = false;

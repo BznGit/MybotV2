@@ -36,7 +36,7 @@ const delCoin = new Scenes.WizardScene(
       return 
     }  
 
-    ctx.reply(`${ctx.wizard.state.pools.length==1?'При удалении последней монеты вы будете полностью удалены из списка повещения' :  'Удалить монету <b>'   + ctx.message.text + '</b>'}` , {
+    ctx.reply(`${ctx.wizard.state.pools.length==1?'При удалении последней монеты вы будете полностью удалены из списка оповещения' :  'Удалить монету <b>'   + ctx.message.text + '</b>'}` , {
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         { text: "Да", callback_data: 'delBlock' }, 

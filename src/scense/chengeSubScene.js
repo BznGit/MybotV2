@@ -243,7 +243,7 @@ chengeSubscribe.action('chengeWorker',  (ctx)=>{
 chengeSubscribe.action('delWorker',  (ctx)=>{
   ctx.wizard.state.stepError = true;
       let curWorkerName = ctx.wizard.state.pool.workers[ctx.wizard.state.curWorkerIndex].name; 
-      console.log('curWorkerName...>>',curWorkerName );
+      //console.log('curWorkerName...>>',curWorkerName );
       let text = 'Вы действительно хотите удалить воркер «'+curWorkerName +'»';
       ctx.reply(text,  {
         parse_mode: 'HTML',

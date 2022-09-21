@@ -119,7 +119,7 @@ const subscribe = new Scenes.WizardScene(
       '<b>- оповещение о новом блоке: </b>«'  + ctx.wizard.state.block + '»;\n' +
       '<b>- кошелек: </b>' + ctx.wizard.state.wallet + ';\n' +
       '<b>- воркер: «</b>'  + ctx.wizard.state.worker.name + '»;\n' +
-      '<b>- оповещение об уровене хешрейта: </b>'  + ctx.wizard.state.worker.hashLevel + ' ' + ctx.wizard.state.worker.hashDev,
+      '<b>- оповещение об уровне хешрейта: </b>'  + ctx.wizard.state.worker.hashLevel + ' ' + ctx.wizard.state.worker.hashDev,
       {parse_mode: 'HTML'}
     )
   
@@ -146,7 +146,7 @@ subscribe.action('subBlock',  (ctx)=>{
 subscribe.action('chooseK',  (ctx)=>{
   ctx.wizard.state.stepError = false;
   ctx.wizard.state.worker.hashDev = 'KH/s'
-  ctx.reply('Введите значение порогового уровня хашрейта в KH/s:');
+  ctx.reply('Введите значение порогового уровня хешрейта в KH/s:');
 });
 subscribe.action('chooseM',  (ctx)=>{
   ctx.wizard.state.stepError = false;
