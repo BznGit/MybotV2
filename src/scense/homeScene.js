@@ -22,8 +22,7 @@ const home = new Scenes.WizardScene(
                     ...Markup.inlineKeyboard([
                        Markup.button.callback('Подписаться на оповещение о новом блоке', 'blockSub'),       
                     ])
-                  })
-                  
+                  })    
       }catch(err){
         console.log('Error sending message to user! HomeScene.js line 20', err);
         logIt('Error sending message to user! HomeScene.js line 20', err);
@@ -45,8 +44,7 @@ const home = new Scenes.WizardScene(
       }
     }else{
     // Если пользователь найден -------------------------------------------------------------------
-        try{
-          
+        try{ 
           axios.get(api + '/api/pools/')
           .then((response)=> {
             let pools = response.data.pools;
@@ -56,11 +54,9 @@ const home = new Scenes.WizardScene(
             })
             return coins
           }).then((coins)=>{
-         
               let text ='';
               let userPools = currUser.pools;
               for(let j=0; j<userPools.length; j++){
-            
                 let curCoin = coins.find(item=>item.id==userPools[j].pool.id);
                 if (curCoin==undefined) {
                   text += j+1 + '. Монета «' + userPools[j].pool.name + '» - больше не поддерживается!\n'
@@ -85,7 +81,6 @@ const home = new Scenes.WizardScene(
                     ])
               }); 
             }); 
-         
         }catch(err){
           console.log('Error getting user info: homeScene.js line 45 ', err);
           logIt('Error getting user info: homeScene.js line 45', err);
@@ -104,7 +99,7 @@ home.action('unSub', (ctx)=>{
 home.action('chengeSub', (ctx)=>{
   ctx.scene.enter("chengeSubSceneWizard")  
 });
-// Обработчик кнопки "... о новом блоке" ----------------------------------------------------------------
+// Обработчик кнопки "... о новом блоке" ----------------------------------------------------------
 home.action('blockSub', (ctx)=>{
   ctx.scene.enter("blockSceneWizard")  
 });

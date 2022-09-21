@@ -37,7 +37,7 @@ const addOnBlock = new Scenes.WizardScene(
       ctx.reply('Вы ничего не ввели! Введите монету заново', {parse_mode: 'HTML'});
       return
     }
-    let curCoin = ctx.wizard.state.coins.find(item=>item.name==ctx.message.text);
+    let curCoin = ctx.wizard.state.coins.find(item=>item.name == ctx.message.text);
     if(curCoin != undefined) ctx.wizard.state.pool = curCoin;
     else{
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> не существует! Введите монету заново', {parse_mode: 'HTML'}); 
@@ -45,9 +45,9 @@ const addOnBlock = new Scenes.WizardScene(
     }  
     ctx.wizard.state.curCoin = curCoin;
     //console.log('addBlock curCoin:', ctx.wizard.state.curCoin);
-    let index = users.findIndex(item=>item.userId==ctx.chat.id);
+    let index = users.findIndex(item=>item.userId == ctx.chat.id);
     ///console.log('index User->', index);
-    let tryCoin = users[index].pools.find(item=>item.pool.id==curCoin.id);
+    let tryCoin = users[index].pools.find(item=>item.pool.id == curCoin.id);
     //console.log('tryCoin User->', tryCoin);
     if (tryCoin != undefined){
       ctx.reply('Mонета <b>«' + ctx.message.text + '» </b> уже добавлена! Выберете другую монету', {parse_mode: 'HTML'});
