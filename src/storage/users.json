@@ -1,1 +1,1 @@
-[{"userId":886960493,"pools":[{"pool":{"id":"vtcpool","name":"Vertcoin"},"wallet":null,"block":"да","workers":[]}]}]
+[{"userId":886960493,"pools":[{"pool":{"id":"vtcpool","name":"Vertcoin"},"wallet":null,"block":"да","workers":[]},{"pool":{"id":"ethwpool","name":"EthereumPoW"},"wallet":null,"block":"да","workers":[]}]}]

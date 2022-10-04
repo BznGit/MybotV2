@@ -90,13 +90,14 @@ function begin(){
       };
       urls.push(poolInfo);
     })
-    
+    console.log('urls:', urls);
     Promise.allSettled(urls.map(item =>
     axios.get(item.url)
     )).then(res => {
       res.forEach(item=>{
         if (item.status=='fulfilled'){
           let block = item.value.data[0];
+          if (block==undefined) return
           let lastBlock = {
             poolId : block.poolId,
             blockHeight : block.blockHeight,
@@ -120,6 +121,7 @@ function getBlock(){
     res.forEach(item=>{
       if (item.status=='fulfilled'){
         let currBlock = item.value.data[0];
+        if(currBlock==undefined) return
         let tempCurBlock = tempBlocks.find(item=>item.blockId==currBlock.poolId);
         if (tempCurBlock != undefined){   
           // Подтверждение нового блока ===========================================================
