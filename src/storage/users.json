@@ -1,1 +1,1 @@
-[{"userId":886960493,"pools":[{"pool":{"id":"vtcpool","name":"Vertcoin"},"wallet":null,"block":"да","workers":[]},{"pool":{"id":"ethwpool","name":"EthereumPoW"},"wallet":null,"block":"да","workers":[]}]}]
+[{"userId":886960493,"pools":[{"pool":{"id":"ethwpool","name":"EthereumPoW"},"wallet":"0x09f947b624acb8fb5f0025a92b3b61df888a9e81","block":"да","workers":[{"name":"eth1","hashLevel":"1","hashDev":"KH/s","delivered":true}]}]}]

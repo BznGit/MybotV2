@@ -41,7 +41,7 @@ const subscribe = new Scenes.WizardScene(
       parse_mode: 'HTML',
       ...Markup.inlineKeyboard([
         { text: "Да", callback_data: 'subBlock' }, 
-        { text: "Нет", callback_data: 'back' }
+        { text: "Нет", callback_data: 'nextStep' }
       ])
     }) 
     return ctx.wizard.next();  
@@ -133,8 +133,11 @@ const subscribe = new Scenes.WizardScene(
      
   } 
 );
-// Ethereum ---------------------------------------------------------------------------------------
-
+// Обработчик отмены подписки на блок -------------------------------------------------------------
+subscribe.action('nextStep',  (ctx)=>{
+  ctx.wizard.state.block = 'нет'
+  ctx.reply('Введите кошелек ' + ctx.wizard.state.pool.name + ':');
+});
 // Обработчик подписки на блок Ethereum -----------------------------------------------------------
 subscribe.action('subBlock',  (ctx)=>{
   ctx.wizard.state.block = 'да'

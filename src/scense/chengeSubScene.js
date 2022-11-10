@@ -14,7 +14,7 @@ const chengeSubscribe = new Scenes.WizardScene(
       ctx.reply(`Выберите необходимое действие:`, {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
-          [ { text: "Добавить монету", callback_data: "addCoin" },{ text: "Изменить монету", callback_data: "changeCoin" }],
+          [{ text: "Добавить монету", callback_data: "addCoin" },{ text: "Изменить монету", callback_data: "changeCoin" }],
           [{ text: "Удалить монету", callback_data: "delCoin" }],
           [{ text: "Назад", callback_data: "back" }],                
         ]) 
@@ -183,6 +183,11 @@ const chengeSubscribe = new Scenes.WizardScene(
       }       
     }, 
 );
+// Обработчик отмены подписки на блок -------------------------------------------------------------
+chengeSubscribe.action('nextStep',  (ctx)=>{
+  ctx.wizard.state.block = 'нет'
+  ctx.reply('Введите кошелек ' + ctx.wizard.state.pool.name + ':');
+});
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('addCoin',  (ctx)=>{
   ctx.reply('Выберете необходимое действие:', {
