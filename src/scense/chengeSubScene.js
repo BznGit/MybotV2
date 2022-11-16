@@ -216,8 +216,14 @@ chengeSubscribe.action('delCoin',  (ctx)=>{
 
 // Обработчик добавления моненты ------------------------------------------------------------------
 chengeSubscribe.action('changeCoin',  (ctx)=>{
-  let  curUser = users.find(item=>item.userId == ctx.chat.id); 
-  ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
+  
+  try{
+    let  curUser = users.find(item=>item.userId == ctx.chat.id);
+     ctx.wizard.state.pools = JSON.parse(JSON.stringify(curUser.pools));
+  }catch{
+    console.log('Error read "curUser.pools"', err);
+    logIt('Error read "curUser.pools" ', err);
+  }
   let buttons = [];
   curUser.pools.forEach(item=>{buttons.push(item.pool.name)});
   ctx.reply('Выберите одну из монет пула на выпадающей клавиатуре:',

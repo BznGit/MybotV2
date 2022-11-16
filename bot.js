@@ -31,7 +31,7 @@ bot.use(stage.middleware());
 
 // Действия бота при старте -----------------------------------------------------------------------
 bot.start((ctx) =>{
-  if (ctx.from.id != settings.adminId && ctx.chat.type =='group'){
+  if (ctx.from.id != settings.adminId || ctx.chat.type =='group'){
     ctx.reply('У Вас недостаточно прав для выполнения этой команды');
     return; 
   }
@@ -45,8 +45,11 @@ bot.start((ctx) =>{
 //Запрос админа на количестово пользователей ------------------------------------------------------
 bot.hears('total', ctx => {
   if(ctx.chat.id==settings.adminId) {
-    ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}` )
-    bot.telegram.sendMessage(settings.channelId, `Hello everyone!`)
+    ctx.telegram.sendMessage(ctx.chat.id, `Total users: ${users.length}` );
+    let min = 0;
+    let max = settings.greetings.length - 1;
+    let index = Math.floor(Math.random() * (max - min + 1)) + min;
+    bot.telegram.sendMessage(settings.channelId, settings.greetings[index]);
   }
   else 
     bot.telegram.sendMessage(ctx.chat.id, `How did you know a secret command?`)
@@ -90,7 +93,7 @@ function begin(){
       };
       urls.push(poolInfo);
     })
-    console.log('urls:', urls);
+   // console.log('urls:', urls);
     Promise.allSettled(urls.map(item =>
     axios.get(item.url)
     )).then(res => {
@@ -128,6 +131,7 @@ function getBlock(){
           if (currBlock.blockHeight == tempCurBlock.blockHeight && currBlock.status == 'confirmed'){  
             let curBlockName = coins.find(item=>item.id == currBlock.poolId); 
             // Формирование текста сообщения ------------------------------------------------------
+            let time = new Date(currBlock.created).toLocaleString();
             let confirmedBlockText = '<b>Новый блок ' + curBlockName.name + ' подтвержден!</b>\n'+
               'Параметры блока:\n' +
               "<b>- высота блока: </b>"  + currBlock.blockHeight +";\n" +
@@ -137,7 +141,7 @@ function getBlock(){
               "<b>- награда: </b>" + currBlock.reward +";\n"+
               "<b>- ссылка: </b>" +    currBlock.infoLink +";\n"+
               "<b>- майнер: </b>" +    currBlock.miner +";\n"+
-              "<b>- создан: </b>" +    currBlock.created;
+              "<b>- создан: </b>" +    time;
             // Отправка сообщения в группу --------------------------------------------------------- 
             try{
               bot.telegram.sendMessage(settings.channelId, confirmedBlockText, {parse_mode: 'HTML'}); 
