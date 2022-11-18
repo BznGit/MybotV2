@@ -31,7 +31,8 @@ bot.use(stage.middleware());
 
 // Действия бота при старте -----------------------------------------------------------------------
 bot.start((ctx) =>{
-  if (ctx.from.id != settings.adminId || ctx.chat.type =='group'){
+  
+  if (ctx.from.id != settings.adminId && ctx.chat.type =='group'){
     ctx.reply('У Вас недостаточно прав для выполнения этой команды');
     return; 
   }
