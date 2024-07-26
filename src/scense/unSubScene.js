@@ -3,6 +3,7 @@ const users = require('../storage/users.json');
 const settings = require('../../botSettings.json');
 const { Scenes, Markup } = require("telegraf");
 const {logIt} = require('../libs/loger');
+
 // Сцена удаления данных пользователя -------------------------------------------------------------
 const unSubscribe = new Scenes.WizardScene(
   "unSubSceneWizard", 
@@ -17,6 +18,7 @@ const unSubscribe = new Scenes.WizardScene(
     })
   }
 );
+
 // Обработчик удаления данных пользователя --------------------------------------------------------
 unSubscribe.action('chooseUnSub', (ctx)=>{
   let  delUser = users.find(item=>item.userId == ctx.chat.id)
@@ -48,11 +50,13 @@ unSubscribe.action('chooseUnSub', (ctx)=>{
     })
   }
 });
+
 // Обработчик кнопки "назад" --------------------------------------------------------------------- 
 unSubscribe.action('back', (ctx)=> {
   ctx.scene.leave();
   ctx.scene.enter("homeSceneWizard");
 });
+
 // Обработчик команды "назад" --------------------------------------------------------------------
 unSubscribe.command('/back', (ctx) => {
   ctx.scene.leave();
